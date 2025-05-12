@@ -6,12 +6,18 @@ import { Layout } from '@components/Layout';
 
 import '@app/pages/settings/index.css';
 
-export const SettingsPage = () => {
+interface SettingsPageProps {
+  forceDisableBack?: boolean;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ forceDisableBack = false }) => {
   const { t } = useTranslation();
   const { hasSettings } = useSettingsStore();
+  
+  const backTo = !forceDisableBack && hasSettings ? '/' : undefined;
 
   return (
-    <Layout title={t('settings.title')} subtitle={t('settings.subtitle')} footerText={t('settings.footer')} settings={false} help={true} backTo={hasSettings ? '/' : undefined}>
+    <Layout title={t('settings.title')} subtitle={t('settings.subtitle')} footerText={t('settings.footer')} settings={false} help={true} backTo={backTo}>
       <Form />
     </Layout>
   );

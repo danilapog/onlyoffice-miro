@@ -1,0 +1,24 @@
+.notconfigured-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.notconfigured-container__icon {
+  margin-bottom: 1rem;
+}
+
+.notconfigured-container__title {
+  margin-bottom: 0.5rem;
+}
+
+.notconfigured-container__title-text {
+  font-weight: bold;
+}
+
+.notconfigured-container__message {
+  max-width: 400px;
+} 
