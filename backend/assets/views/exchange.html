@@ -1,0 +1,72 @@
+{{ define "exchange" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Error - Miro ONLYOFFICE Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .error-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+        }
+        .error-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 24px;
+        }
+        .error-title {
+            color: #2D2D2D;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .error-message {
+            color: #6B6B6B;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 32px;
+        }
+        .retry-button {
+            background-color: #2563EB;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .retry-button:hover {
+            background-color: #1D4ED8;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <svg class="error-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="#EF4444"/>
+        </svg>
+        <h1 class="error-title">Authentication Failed</h1>
+        <p class="error-message">We couldn't complete the authentication process. This might be due to an expired or invalid authorization code.</p>
+      <a class="retry-button" href="{{ .installationLocation }}">Try Again</a>
+    </div>
+</body>
+</html>
+{{ end }}

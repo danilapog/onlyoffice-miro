@@ -1,0 +1,138 @@
+.form {
+  width: 100%;
+  background-color: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.form__header {
+  width: 100%;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form__title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.form__nav {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.form__back-link {
+  display: flex;
+  align-items: center;
+  color: #374151;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.form__back-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.form__back-text {
+  margin-left: 8px;
+}
+
+.form__content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form__description {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.form__fields {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form__field {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.form__checkbox-container {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.form__checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.form__checkbox {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  accent-color: #4262FF;
+}
+
+.form__checkbox-text {
+  color: #374151;
+}
+
+.form__checkbox-description {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  margin-left: 24px;
+  line-height: 1.4;
+}
+
+.form__button-container {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.form__footer {
+  width: 100%;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.form__footer-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.form__expiration-card {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form__expiration-icon {
+  color: #ef4444;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.form__expiration-text {
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}

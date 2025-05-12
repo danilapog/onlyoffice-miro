@@ -1,0 +1,150 @@
+package base
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core/component"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/middleware/authentication"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
+	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/sync/errgroup"
+)
+
+type BaseController struct {
+	*common.BaseHandler
+	Config          *config.Config
+	MiroClient      miro.Client
+	BuilderService  document.BuilderService
+	OAuthService    oauthService.OAuthService[miro.AuthenticationResponse]
+	SettingsService settings.SettingsService
+	JwtService      crypto.Signer
+	Logger          service.Logger
+}
+
+func NewBaseController(
+	config *config.Config,
+	miroClient miro.Client,
+	builderService document.BuilderService,
+	oauthService oauthService.OAuthService[miro.AuthenticationResponse],
+	settingsService settings.SettingsService,
+	jwtService crypto.Signer,
+	logger service.Logger,
+) *BaseController {
+	return &BaseController{
+		BaseHandler:     &common.BaseHandler{},
+		Config:          config,
+		MiroClient:      miroClient,
+		BuilderService:  builderService,
+		OAuthService:    oauthService,
+		SettingsService: settingsService,
+		JwtService:      jwtService,
+		Logger:          logger,
+	}
+}
+
+func (c *BaseController) ExtractUserToken(ctx echo.Context) (*authentication.TokenClaims, error) {
+	token, ok := ctx.Get(common.ContextKeyUser).(*authentication.TokenClaims)
+	if !ok {
+		return nil, ErrMissingOpenIdToken
+	}
+
+	return token, nil
+}
+
+func (c *BaseController) GetQueryParam(ctx echo.Context, key string) (string, error) {
+	value := ctx.QueryParam(key)
+	if value == "" {
+		return "", fmt.Errorf("missing query parameter: %s", key)
+	}
+
+	return value, nil
+}
+
+func (c *BaseController) FetchAuthenticationWithSettings(ctx context.Context, uid, tid, bid string) (*component.Settings, *component.Authentication, error) {
+	g, ctx := errgroup.WithContext(ctx)
+	var settings component.Settings
+	var auth component.Authentication
+	var settingsErr, authErr error
+
+	g.Go(func() error {
+		var err error
+		settings, err = c.SettingsService.Find(ctx, tid, bid)
+		if err != nil {
+			settingsErr = err
+			return fmt.Errorf("failed to fetch settings: %w", err)
+		}
+
+		if settings.Demo.Enabled && (settings.Address == "" || settings.Header == "" || settings.Secret == "") {
+			if settings.Demo.Started == nil || !settings.Demo.Started.Add(time.Duration(c.Config.DemoServer.Days)*24*time.Hour).After(time.Now()) {
+				settingsErr = ErrSettingsNotConfigured
+				return ErrSettingsNotConfigured
+			}
+		} else if settings.Address == "" && settings.Header == "" && settings.Secret == "" {
+			settingsErr = ErrSettingsNotConfigured
+			return ErrSettingsNotConfigured
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		auth, err = c.OAuthService.Find(ctx, tid, uid)
+		if err != nil {
+			authErr = err
+			return fmt.Errorf("failed to fetch auth: %w", err)
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		if authErr != nil && errors.Is(authErr, oauthService.ErrTokenMissing) {
+			return nil, nil, ErrMissingAuthentication
+		}
+		if settingsErr != nil && errors.Is(settingsErr, ErrSettingsNotConfigured) {
+			return nil, nil, ErrSettingsNotConfigured
+		}
+		return nil, nil, err
+	}
+
+	return &settings, &auth, nil
+}
+
+func (c *BaseController) SendError(ctx echo.Context, status int, err error) error {
+	return ctx.JSON(status, common.ErrorResponse{Error: err.Error()})
+}
+
+func (c *BaseController) SendJSON(ctx echo.Context, data any) error {
+	return ctx.JSON(http.StatusOK, map[string]any{"data": data})
+}
+
+func (c *BaseController) HandleError(ctx echo.Context, err error, status int, message string) error {
+	if err != nil {
+		c.Logger.Error(ctx.Request().Context(), message, service.Fields{"error": err})
+		return c.SendError(ctx, status, fmt.Errorf("%s: %w", message, err))
+	}
+	return nil
+}
+
+func (c *BaseController) withTimeout(duration time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), duration)
+}
+
+func (c *BaseController) ExecuteWithTimeout(ctx echo.Context, duration time.Duration, fn func(context.Context) error) error {
+	tctx, cancel := c.withTimeout(duration)
+	defer cancel()
+
+	return fn(tctx)
+}

@@ -1,0 +1,338 @@
+package initializer
+
+import (
+	"context"
+	"io"
+	"time"
+
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/deployments"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/oauth"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller/auth"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller/callback"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller/editor"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller/file"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller/settings"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/cache"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/logger"
+	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/processor"
+	settingsService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/storage/pg"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/fx"
+)
+
+// Module defines the application dependency graph using fx.
+// Components are initialized in the following order:
+// 1. Infrastructure (Logger, Database)
+// 2. External clients
+// 3. Application services
+// 4. Web Framework components
+// 5. Application container
+var Module = fx.Options(
+	fx.Provide(
+		// Infrastructure layer - fundamental services
+		NewLogger,   // Base logging service first
+		NewDatabase, // Database connection and storage services
+		NewCache,    // Caching service
+
+		// External clients layer
+		NewClients, // External API client services (Miro, OAuth)
+
+		// Application services layer - business logic
+		NewServices, // Core application services
+
+		// Web layer - HTTP components
+		NewControllers, // Controller layer for handling requests
+		NewEcho,        // Web framework setup
+		NewRouter,      // Routing configuration
+
+		// Application container - wires everything together
+		NewApp, // Main application container
+	),
+)
+
+//
+// INFRASTRUCTURE LAYER
+//
+
+// NewLogger creates a logger service based on configuration.
+// This should be initialized first as it's used by most other components.
+func NewLogger(config *config.LoggerConfig) service.Logger {
+	switch config.LoggerType {
+	case "zap":
+		return logger.NewZapLogger(config)
+	default:
+		return logger.NewNoopLogger()
+	}
+}
+
+// NewCache creates a caching service.
+// It initializes a Redis-based cache with the application configuration.
+func NewCache(config *config.Config, logger service.Logger) (service.Cache, error) {
+	// Create a Redis cache with default options
+	return cache.NewRedisCache(
+		config.Redis,
+		logger,
+		cache.WithKeyPrefix("app:cache:"),
+		cache.WithDefaultExpiration(5*time.Minute),
+	)
+}
+
+// NewDatabase initializes the database connection pool and storage services.
+// It handles database migration and creates storage repositories.
+func NewDatabase(config *config.Config) (*Database, error) {
+	pool, err := pg.NewPostgresPool(config.Database.DatasourceURL())
+	if err != nil {
+		return nil, err
+	}
+
+	migrator, err := deployments.NewMigrator(pool, config.Database)
+	if err != nil {
+		return nil, err
+	}
+
+	defer migrator.Close()
+	if err := migrator.Up(); err != nil {
+		return nil, err
+	}
+
+	authStorage, err := pg.NewPostgresStorage(pool, processor.NewAuthenticationProcessor())
+	if err != nil {
+		return nil, err
+	}
+
+	settingsStorage, err := pg.NewPostgresStorage(pool, processor.NewSettingsProcessor())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Database{
+		Pool:            pool,
+		AuthStorage:     authStorage,
+		SettingsStorage: settingsStorage,
+	}, nil
+}
+
+//
+// EXTERNAL CLIENTS LAYER
+//
+
+// NewClients initializes external API clients.
+// These are used to communicate with external services like Miro.
+func NewClients(config *config.Config) (*Clients, error) {
+	oauthClient, err := oauth.NewOAuthClient[miro.AuthenticationResponse](config.OAuth)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Clients{
+		OAuthClient: oauthClient,
+		MiroClient:  miro.NewMiroClient(config.Miro),
+	}, nil
+}
+
+//
+// APPLICATION SERVICES LAYER
+//
+
+// NewServices initializes all application business logic services.
+// These build upon the database and clients to provide core functionality.
+func NewServices(
+	config *config.Config,
+	database *Database,
+	clients *Clients,
+	logger service.Logger,
+	cache service.Cache,
+) (*Services, error) {
+	mapper := NewAuthenticationMapper()
+	cipher := crypto.NewAESCipher([]byte(config.OAuth.ClientSecret))
+	jwt := crypto.NewJwtService()
+
+	renderer, err := controller.NewTemplateRenderer(logger)
+	if err != nil {
+		return nil, err
+	}
+
+	formatManager, err := document.NewMapFormatManager()
+	if err != nil {
+		return nil, err
+	}
+
+	builder := document.NewBuilderService(
+		document.NewModificationKeyGenerator(),
+		document.NewJwtSignatureGenerator(),
+		formatManager,
+	)
+
+	authService := oauthService.NewOAuthService(
+		cipher,
+		clients.OAuthClient,
+		mapper,
+		database.AuthStorage,
+	)
+
+	settingsService := settingsService.NewSettingsService(
+		cipher,
+		database.SettingsStorage,
+		cache,
+		logger,
+	)
+
+	return &Services{
+		AuthService:     authService,
+		SettingsService: settingsService,
+		JwtService:      jwt,
+		Builder:         builder,
+		FormatManager:   formatManager,
+		Renderer:        &renderer,
+	}, nil
+}
+
+//
+// WEB LAYER - CONTROLLERS AND FRAMEWORK
+//
+
+// NewControllers initializes HTTP request handlers.
+// These depend on services for processing business logic.
+func NewControllers(
+	config *config.Config,
+	clients *Clients,
+	services *Services,
+	logger service.Logger,
+) (*Controllers, error) {
+	editor := editor.NewEditorController(
+		config,
+		clients.MiroClient,
+		services.Builder,
+		services.AuthService,
+		services.SettingsService,
+		services.JwtService,
+		logger,
+	)
+
+	auth := auth.NewAuthController(
+		config,
+		clients.OAuthClient,
+		services.AuthService,
+		logger,
+	)
+
+	callback := callback.NewCallbackController(
+		config,
+		clients.MiroClient,
+		services.AuthService,
+		services.SettingsService,
+		services.JwtService,
+		logger,
+	)
+
+	settings := settings.NewSettingsController(
+		clients.MiroClient,
+		services.SettingsService,
+		services.AuthService,
+		4*time.Second,
+		logger,
+	)
+
+	fileManagement := file.NewFileManagementController(
+		config,
+		clients.MiroClient,
+		services.Builder,
+		services.AuthService,
+		services.SettingsService,
+		services.JwtService,
+		logger,
+	)
+
+	fileConversion := file.NewFileConversionController(
+		config,
+		clients.MiroClient,
+		services.Builder,
+		services.AuthService,
+		services.SettingsService,
+		services.JwtService,
+		logger,
+	)
+
+	return &Controllers{
+		Editor:         editor,
+		Auth:           auth,
+		Callback:       callback,
+		Settings:       settings,
+		FileManagement: fileManagement,
+		FileConversion: fileConversion,
+	}, nil
+}
+
+// NewEcho initializes the Echo web framework.
+// It disables unnecessary default logging and sets up required components.
+func NewEcho(services *Services) *echo.Echo {
+	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
+	e.Logger.SetOutput(io.Discard)
+	e.Renderer = services.Renderer
+	return e
+}
+
+// NewRouter creates the routing configuration for the application.
+// This component only creates the router instance - route setup happens in App.SetupRoutes.
+func NewRouter(
+	echo *echo.Echo,
+	config *config.Config,
+	services *Services,
+) *Router {
+	return &Router{
+		Echo:     echo,
+		Config:   config,
+		Services: services,
+	}
+}
+
+//
+// APPLICATION CONTAINER
+//
+
+// NewApp creates the main application container and wires together all components.
+// It registers lifecycle hooks to handle graceful startup and shutdown.
+func NewApp(
+	lifecycle fx.Lifecycle,
+	echo *echo.Echo,
+	router *Router,
+	database *Database,
+	services *Services,
+	controllers *Controllers,
+	clients *Clients,
+	config *config.Config,
+	logger service.Logger,
+) *App {
+	app := &App{
+		Echo:        echo,
+		Router:      router,
+		Database:    database,
+		Services:    services,
+		Controllers: controllers,
+		Clients:     clients,
+		Config:      config,
+	}
+
+	app.SetupRoutes(logger)
+
+	lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			return echo.Shutdown(ctx)
+		},
+	})
+
+	return app
+}

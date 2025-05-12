@@ -1,0 +1,51 @@
+{
+  "creation": {
+    "title": "Create new file ES",
+    "subtitle": "Enter file name and choose the format to create a new document ES",
+    "footer": "Developed by ONLYOFFICE ES",
+    "fileName": "File name ES",
+    "fileType": "File type ES",
+    "create": "Create ES",
+    "creating": "Creating... ES"
+  },
+  "manager": {
+    "notfound": "Could not find any documents matching ES ",
+    "title": "File manager ES",
+    "subtitle": "Choose or create a document to edit it in Miro ES",
+    "footer": "Developed by ONLYOFFICE ES",
+    "create": "Create new file ES",
+    "auth_error": "Authorization error ES",
+    "auth_error_description": "Please install or reinstall the app ES",
+    "auth_error_button": "Reinstall ES"
+  },
+  "settings": {
+    "title": "Settings ES",
+    "subtitle": "Configure ONLYOFFICE app settings ES",
+    "footer": "Developed by ONLYOFFICE ES",
+    "description": "The app which enables the users to edit office documents from Miro using ONLYOFFICE Document Server ES",
+    "address": "Document Server Address ES",
+    "secret": "JWT Secret ES",
+    "header": "JWT Header ES",
+    "demo": {
+      "title": "Connect to demo ONLYOFFICE Docs server ES",
+      "description": "This is a public test server, please do not use it for private data ES",
+      "started": "This demo will be available until {{date}} ES",
+      "expired": "This demo has expired ES"
+    },
+    "save": "Save ES"
+  },
+  "empty": {
+    "title": "No docs here yet ES",
+    "subtitle": "Press create new document button ES"
+  },
+  "file": {
+    "types": {
+      "docx": "Document ES",
+      "xlsx": "Spreadsheet ES",
+      "pptx": "Presentation ES"
+    },
+    "navigate": "Navigate to ES",
+    "download": "Download as PDF ES",
+    "delete": "Delete ES"
+  }
+} 
