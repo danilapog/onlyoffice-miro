@@ -33,10 +33,15 @@
     },
     "demo": {
       "title": "Connect to demo ONLYOFFICE Docs server",
-      "description": "This is a public test server, please do not use it for private data",
+      "description": "This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.",
       "started": "This demo will be available until {{date}}"
     },
-    "save": "Save"
+    "save": "Save",
+    "errors": {
+      "addressRequired": "Please enter a valid address",
+      "headerRequired": "Please enter a valid header",
+      "secretRequired": "Please enter a valid secret"
+    }
   },
   "empty": {
     "title": "No docs here yet",

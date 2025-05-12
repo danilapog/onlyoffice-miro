@@ -1,10 +1,12 @@
-import React, { forwardRef, FormEvent } from 'react';
+import React, { forwardRef, FormEvent, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
 import { Banner } from '@features/settings/components/Banner';
 import { FormInput } from '@components/Input';
 import { Button } from '@components/Button';
+
+import { validateAddress, validateShortText } from '@utils/validator';
 
 import '@features/settings/components/form.css';
 
@@ -15,6 +17,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
   children,
   ...props
 }, ref) => {
+  const [addressError, setAddressError] = useState('');
+  const [secretError, setSecretError] = useState('');
+  const [headerError, setHeaderError] = useState('');
   const { t } = useTranslation();
   const {
     address,
@@ -30,11 +35,6 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
     saveSettings,
   } = useSettingsStore();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await saveSettings();
-  };
-
   const isDemoExpired = demoStarted ? 
     (() => {
       const startTime = new Date(demoStarted).getTime();
@@ -43,6 +43,57 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
       const currentTime = Date.now();      
       return currentTime > expiryTime;
     })() : false;
+
+  const fieldsRequired = !demo || isDemoExpired;
+
+  const validateAddressField = (value: string): string => {
+    if (!fieldsRequired) return '';
+    return validateAddress(value) ? '' : t('settings.errors.addressRequired');
+  };
+
+  const validateHeaderField = (value: string): string => {
+    if (!fieldsRequired) return '';
+    return validateShortText(value) ? '' : t('settings.errors.headerRequired');
+  };
+
+  const validateSecretField = (value: string): string => {
+    if (!fieldsRequired) return '';
+    return validateShortText(value) ? '' : t('settings.errors.secretRequired');
+  };
+
+  useEffect(() => {
+    if (fieldsRequired) {
+      setAddressError(validateAddressField(address));
+      setHeaderError(validateHeaderField(header));
+      setSecretError(validateSecretField(secret));
+    } else {
+      setAddressError('');
+      setHeaderError('');
+      setSecretError('');
+    }
+  }, [demo, isDemoExpired]);
+
+  const validateForm = (): boolean => {
+    if (!fieldsRequired) return true;
+    
+    const addressErr = validateAddressField(address);
+    const headerErr = validateHeaderField(header);
+    const secretErr = validateSecretField(secret);
+    
+    setAddressError(addressErr);
+    setHeaderError(headerErr);
+    setSecretError(secretErr);
+    
+    return !addressErr && !headerErr && !secretErr;
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      await saveSettings();
+    }
+  };
 
   return (
     <div
@@ -61,8 +112,14 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
               name="address"
               type="text"
               value={address}
+              error={addressError}
               disabled={loading}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAddress(value);
+                setAddressError(validateAddressField(value));
+              }}
+              required={fieldsRequired}
               autoComplete="off"
             />
           </div>
@@ -72,8 +129,14 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
               name="secret"
               type="password"
               value={secret}
+              error={secretError}
               disabled={loading}
-              onChange={(e) => setSecret(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSecret(value);
+                setSecretError(validateSecretField(value));
+              }}
+              required={fieldsRequired}
               autoComplete="off"
             />
           </div>
@@ -83,8 +146,14 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
               name="header"
               type="text"
               value={header}
+              error={headerError}
               disabled={loading}
-              onChange={(e) => setHeader(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setHeader(value);
+                setHeaderError(validateHeaderField(value));
+              }}
+              required={fieldsRequired}
               autoComplete="off"
             />
           </div>
@@ -99,7 +168,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
                 className="form__checkbox"
                 checked={demo}
                 disabled={loading || !!demoStarted}
-                onChange={() => setDemo(!demo)}
+                onChange={() => {
+                  setDemo(!demo);
+                }}
               />
               <span className="form__checkbox-text">{t('settings.demo.title')}</span>
             </label>

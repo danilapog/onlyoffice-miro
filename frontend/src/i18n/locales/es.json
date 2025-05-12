@@ -36,7 +36,12 @@
       "description": "This is a public test server, please do not use it for private data ES",
       "started": "This demo will be available until {{date}} ES"
     },
-    "save": "Save ES"
+    "save": "Save ES",
+    "errors": {
+      "addressRequired": "Please enter a valid address ES",
+      "headerRequired": "Please enter a valid header ES",
+      "secretRequired": "Please enter a valid secret ES"
+    }
   },
   "empty": {
     "title": "No docs here yet ES",

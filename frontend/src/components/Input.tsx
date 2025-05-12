@@ -5,9 +5,10 @@ import '@components/input.css';
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helperText?: string;
   fullWidth?: boolean;
   disabled?: boolean;
-  helperText?: string;
+  required?: boolean;
 };
 
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(({
@@ -17,6 +18,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(({
   helperText,
   fullWidth = false,
   disabled = false,
+  required = false,
   value,
   className = '',
   onChange,
@@ -35,7 +37,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(({
           htmlFor={realId}
           className="form-input__label"
         >
-          {label}
+          {label}{required && <span className="form-input__label_required">*</span>}
         </label>
       )}
       <div className="form-input__container">
@@ -52,12 +54,18 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(({
           value={value}
           onChange={handleChange}
           disabled={disabled}
+          required={required}
           {...props}
         />
       </div>
-      {(error || helperText) && (
-        <p className={`form-input__helper-text ${error ? 'form-input__helper-text--error' : 'form-input__helper-text--normal'}`}>
-          {error || helperText}
+      {error && (
+        <p className="form-input__helper-text form-input__helper-text_error">
+          {error}
+        </p>
+      )}
+      {!error && helperText && (
+        <p className="form-input__helper-text form-input__helper-text_normal">
+          {helperText}
         </p>
       )}
     </div>
