@@ -26,11 +26,15 @@
     "address": "Document Server Address",
     "secret": "JWT Secret",
     "header": "JWT Header",
+    "banner": {
+      "title": "ONLYOFFICE Docs Cloud",
+      "description": "Easily launch the editors in the cloud without downloading and installation",
+      "button": "Get now"
+    },
     "demo": {
       "title": "Connect to demo ONLYOFFICE Docs server",
       "description": "This is a public test server, please do not use it for private data",
-      "started": "This demo will be available until {{date}}",
-      "expired": "This demo has expired"
+      "started": "This demo will be available until {{date}}"
     },
     "save": "Save"
   },

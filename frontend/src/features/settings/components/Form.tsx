@@ -2,6 +2,7 @@ import React, { forwardRef, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
+import { Banner } from '@features/settings/components/Banner';
 import { FormInput } from '@components/Input';
 import { Button } from '@components/Button';
 
@@ -19,7 +20,6 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
     address,
     header,
     secret,
-    persistedCredentials,
     loading,
     demo,
     demoStarted,
@@ -89,7 +89,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
             />
           </div>
           
-          {!isDemoExpired ? (
+          {isDemoExpired && <Banner />}
+          
+          {!isDemoExpired && (
             <div className="form__checkbox-container">
               <label className="form__checkbox-label">
                 <input
@@ -106,17 +108,6 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
                 {demoStarted && t('settings.demo.started', { date: new Date(demoStarted).toLocaleDateString('en-GB').split('/').join('.') })}
               </p>
             </div>
-          ) : (
-            <>
-              {!persistedCredentials && (
-                <div className="form__expiration-card">
-                  <div className="form__expiration-icon">⚠️</div>
-                  <div className="form__expiration-text">
-                    {t('settings.demo.expired')}
-                  </div>
-                </div>
-              )}
-            </>
           )}
 
           <div className="form__button-container">
