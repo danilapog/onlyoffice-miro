@@ -1,4 +1,4 @@
-import React, { forwardRef, FormEvent, useState, useEffect } from 'react';
+import React, { forwardRef, FormEvent, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,8 +51,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
       return currentTime > expiryTime;
     })() : false;
 
-  const fieldsRequired = !demo || isDemoExpired;
-
+  const hasInputs = address.trim() !== '' || header.trim() !== '' || secret.trim() !== '';
+  const fieldsRequired = !demo || isDemoExpired || hasInputs;
+  
   const validateAddressField = (value: string): string => {
     if (!fieldsRequired) return '';
     return validateAddress(value) ? '' : t('settings.errors.addressRequired');
@@ -67,25 +68,31 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
     if (!fieldsRequired) return '';
     return validateShortText(value) ? '' : t('settings.errors.secretRequired');
   };
+  
+  const addressErr = useMemo(() => validateAddressField(address), [address, fieldsRequired]);
+  const headerErr = useMemo(() => validateHeaderField(header), [header, fieldsRequired]);
+  const secretErr = useMemo(() => validateSecretField(secret), [secret, fieldsRequired]);
+  
+  const hasValidationErrors = !!(addressErr || headerErr || secretErr);
+  const saveDisabled = loading || 
+    (!hasInputs && !demo) || 
+    (!hasInputs && demo && !!demoStarted && !isDemoExpired) || 
+    hasValidationErrors;
 
   useEffect(() => {
     if (fieldsRequired) {
-      setAddressError(validateAddressField(address));
-      setHeaderError(validateHeaderField(header));
-      setSecretError(validateSecretField(secret));
+      setAddressError(addressErr);
+      setHeaderError(headerErr);
+      setSecretError(secretErr);
     } else {
       setAddressError('');
       setHeaderError('');
       setSecretError('');
     }
-  }, [demo, isDemoExpired]);
+  }, [demo, isDemoExpired, address, header, secret, saveDisabled, addressErr, headerErr, secretErr]);
 
   const validateForm = (): boolean => {
     if (!fieldsRequired) return true;
-    
-    const addressErr = validateAddressField(address);
-    const headerErr = validateHeaderField(header);
-    const secretErr = validateSecretField(secret);
     
     setAddressError(addressErr);
     setHeaderError(headerErr);
@@ -197,7 +204,7 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
               type="submit"
               name={t('settings.save')}
               variant="primary"
-              disabled={loading}
+              disabled={saveDisabled}
               className="form__save-button"
               title={t('settings.save')}
             />
