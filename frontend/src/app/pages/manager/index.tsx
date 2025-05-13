@@ -50,11 +50,17 @@ export const ManagerPage = () => {
     }
 
     if (documents.length === 0) {
-      return <Empty />;
+      return <Empty 
+        title={t('empty.title')}
+        subtitle={t('empty.subtitle')}
+      />;
     }
     
     if (searchQuery !== '' && filteredDocuments.length === 0) {
-      return <div>{t('manager.notfound', { searchQuery })}</div>;
+      return <Empty 
+        title={t('empty.search_title')}
+        subtitle={t('empty.search_subtitle')}
+      />;
     }
     
     return <FilesList />;

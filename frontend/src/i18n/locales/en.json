@@ -49,7 +49,9 @@
   },
   "empty": {
     "title": "No docs here yet",
-    "subtitle": "Press create new document button"
+    "subtitle": "Press create new document button",
+    "search_title": "No documents found",
+    "search_subtitle": "Please try a different search query"
   },
   "file": {
     "types": {

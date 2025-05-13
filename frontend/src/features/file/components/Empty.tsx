@@ -1,17 +1,18 @@
 import React, { forwardRef } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import '@features/file/components/empty.css';
 
 interface EmptyProps extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  subtitle: string;
 };
 
 export const Empty = forwardRef<HTMLDivElement, EmptyProps>(({
+  title,
+  subtitle,
   className,
   ...props
 }, ref) => {
-  const { t } = useTranslation();
-
   return (
     <div
       ref={ref}
@@ -22,8 +23,8 @@ export const Empty = forwardRef<HTMLDivElement, EmptyProps>(({
         className='empty-container__icon'
         src='/nodocs.svg'
       />
-      <span className='empty-container__title'>{t('empty.title')}</span>
-      <span className='empty-container__subtitle'>{t('empty.subtitle')}</span>
+      <span className='empty-container__title'>{title}</span>
+      <span className='empty-container__subtitle'>{subtitle}</span>
     </div>
   )
 });
