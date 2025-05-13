@@ -6,7 +6,10 @@
     "fileName": "File name ES",
     "fileType": "File type ES",
     "create": "Create ES",
-    "creating": "Creating... ES"
+    "creating": "Creating... ES",
+    "errors": {
+      "nameRequired": "File name is required ES"
+    }
   },
   "manager": {
     "notfound": "Could not find any documents matching ES ",

@@ -6,7 +6,10 @@
     "fileName": "File name",
     "fileType": "File type",
     "create": "Create",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "errors": {
+      "nameRequired": "File name is required"
+    }
   },
   "manager": {
     "notfound": "Could not find any documents matching ",

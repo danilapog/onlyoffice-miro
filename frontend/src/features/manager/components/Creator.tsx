@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useMemo } from 'react';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -34,10 +34,18 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
   const {
     refreshDocuments
   } = useFilesStore();
+  const [nameError, setNameError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     setSelectedType(getSupportedTypes()[0]);
   }, [getSupportedTypes, setSelectedType]);
+
+  useEffect(() => {
+    if (!selectedName || selectedName.trim() === '')
+      setNameError(t('creation.errors.nameRequired'));
+    else
+      setNameError(undefined);
+  }, [selectedName, t]);
 
   const fileTypeOptions: SelectOption[] = useMemo(() => {
     const supportedTypes = getSupportedTypes();
@@ -46,6 +54,8 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
       label: t(`file.types.${type}`)
     }));
   }, [getSupportedTypes, t]);
+
+  const formValid = selectedName && selectedName.trim() !== '' && selectedType && !nameError;
 
   const handleCreateFile = async () => {
     await createFile();
@@ -63,12 +73,15 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
         <div className='creator-container_shifted'>
           <div className='creator-container__form'>
             <div className='creator-container__form-group'>
-              <Label className='creator-container__label'>{t('creation.fileName')}</Label>
+              <Label className='creator-container__label'>
+                {t('creation.fileName')}<span className="form-input__label_required">*</span>
+              </Label>
               <FormInput 
                 className='creator-container__input'
                 value={selectedName}
                 onChange={(e) => setSelectedName(e.target.value)}
                 disabled={loading}
+                error={nameError}
               />
             </div>
             <div className='creator-container__form-group'>
@@ -92,7 +105,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
             await handleCreateFile();
             navigate('/', { state: { isBack: true } });
           }}
-          disabled={loading || !selectedName || !selectedType}
+          disabled={loading || !formValid}
         />
       </div>
     </div>
