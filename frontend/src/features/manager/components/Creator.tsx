@@ -66,7 +66,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
   return (
     <div
       ref={ref}
-      className={`creator-container ${className}`}
+      className={`creator-container ${className || ''}`}
       {...props}
     >
       <div className='creator-container__main'>
@@ -97,7 +97,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
           </div>
         </div>
       </div>
-      <div className='creator-container_shifted'>
+      <div className='creator-container__button-container'>
         <Button 
           name={loading ? t('creation.creating') : t('creation.create')}
           variant='primary' 
@@ -106,6 +106,12 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
             navigate('/', { state: { isBack: true } });
           }}
           disabled={loading || !formValid}
+          style={{ 
+            width: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
         />
       </div>
     </div>
