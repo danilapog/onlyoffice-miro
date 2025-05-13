@@ -63,12 +63,10 @@
 
 .form__field {
   width: 100%;
-  margin-bottom: 8px;
 }
 
 .form__checkbox-container {
   width: 100%;
-  margin-top: 16px;
 }
 
 .form__checkbox-label {
@@ -82,6 +80,10 @@
   height: 16px;
   margin-right: 8px;
   accent-color: #4262FF;
+}
+
+.form__checkbox:checked {
+  align-content: aqua;
 }
 
 .form__checkbox-text {
@@ -98,7 +100,14 @@
 
 .form__button-container {
   width: 100%;
-  margin-top: 24px;
+  margin-top: 1.125rem;
+}
+
+.form__save-button {
+  max-width: 5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form__footer {

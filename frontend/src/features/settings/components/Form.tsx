@@ -198,6 +198,8 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
               name={t('settings.save')}
               variant="primary"
               disabled={loading}
+              className="form__save-button"
+              title={t('settings.save')}
             />
           </div>
         </form>
