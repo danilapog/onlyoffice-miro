@@ -9,7 +9,7 @@ import '@components/layout.css';
 
 interface LayoutProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   footerText: string;
   backTo?: string;
   settings?: boolean;
@@ -45,15 +45,17 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className='layout-title'>
               <Link to={backTo} className='layout-title__back'>
                 <img src="/arrow-left.svg" alt="Back" className="layout-title__back-icon" />
-                <span className="layout-title__back-text">{title}</span>
+                <span className="layout-title__back-text" title={title}>{title}</span>
               </Link>
             </div>
           ) : (
-            <div className="layout-title">{title}</div>
+            <div className="layout-title" title={title}>{title}</div>
           )}
-          <div className="layout-subtitle">
-            {subtitle}
-          </div>
+          {subtitle && (
+            <div className="layout-subtitle">
+              {subtitle}
+            </div>
+          )}
         </div>
       </div>
       <div className="layout-main">

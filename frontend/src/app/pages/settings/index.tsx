@@ -17,7 +17,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ forceDisableBack = f
   const backTo = !forceDisableBack && hasSettings ? '/' : undefined;
 
   return (
-    <Layout title={t('settings.title')} subtitle={t('settings.subtitle')} footerText={t('settings.footer')} settings={false} help={true} backTo={backTo}>
+    <Layout title={t('settings.title')} footerText={t('settings.footer')} settings={false} help={true} backTo={backTo}>
       <Form />
     </Layout>
   );

@@ -24,8 +24,7 @@
     "notconfigured_message": "Please contact your administrator to configure the document server ES"
   },
   "settings": {
-    "title": "Settings ES",
-    "subtitle": "Configure ONLYOFFICE app settings ES",
+    "title": "Configure ONLYOFFICE app settings ES",
     "footer": "Developed by ONLYOFFICE ES",
     "description": "The app which enables the users to edit office documents from Miro using ONLYOFFICE Document Server ES",
     "address": "Document Server Address ES",
