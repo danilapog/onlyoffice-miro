@@ -17,7 +17,7 @@
 }
 
 .manager-container__header__title {
-  font-family: Verdana;
+  font-family: "Open Sans", sans-serif;
   font-weight: 600;
   font-size: 16px;
   line-height: 20px;
@@ -26,7 +26,7 @@
 }
 
 .manager-container__header__subtitle {
-  font-family: Verdana;
+  font-family: "Open Sans", sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 140%;
@@ -101,7 +101,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  font-family: Verdana;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
   color: #656B81;
 }

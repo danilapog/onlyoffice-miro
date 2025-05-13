@@ -27,7 +27,7 @@
   margin-bottom: 0.5rem;
   color: #4f46e5;
   text-decoration: none;
-  font-family: Verdana;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
 }
 
@@ -86,10 +86,11 @@
 }
 
 .layout-subtitle {
-  font-family: Verdana;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
   color: #656B81;
-  margin-bottom: 1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .layout-main {
