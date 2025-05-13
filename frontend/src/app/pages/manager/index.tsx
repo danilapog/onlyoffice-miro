@@ -10,6 +10,7 @@ import { NotConfigured } from '@features/file/components/NotConfigured';
 import { Installation } from '@features/file/components/Installation';
 import { Button } from '@components/Button';
 import { Layout } from '@components/Layout';
+import { Spinner } from '@components/Spinner';
 
 import "@app/pages/manager/index.css";
 import { useApplicationStore } from '@stores/useApplicationStore';
@@ -25,8 +26,10 @@ export const ManagerPage = () => {
     loading,
     authError,
     serverConfigError,
+    initialized,
   } = useFilesStore();
 
+  const isInitialLoading = loading && !initialized;
 
   if (serverConfigError && admin)
     return <SettingsPage forceDisableBack={true} />;
@@ -41,7 +44,9 @@ export const ManagerPage = () => {
     }
 
     if (loading && documents.length === 0) {
-      return <div className="manager-container__main__loading">{t('manager.loading', { fallback: 'Loading...' })}</div>;
+      return <div className="manager-container__main__loading">
+        <Spinner size="large" />
+      </div>;
     }
 
     if (documents.length === 0) {
@@ -76,8 +81,14 @@ export const ManagerPage = () => {
             <Link 
               to="/create"
               state={{ isBack: false }}
+              className={isInitialLoading ? 'disabled-link' : ''}
+              onClick={e => isInitialLoading && e.preventDefault()}
             >
-              <Button name={t('manager.create')} variant='primary' />
+              <Button 
+                name={t('manager.create')} 
+                variant='primary' 
+                disabled={isInitialLoading}
+              />
             </Link>
           )}
         </div>

@@ -10,8 +10,10 @@ export const Searchbar = forwardRef<HTMLDivElement, SearchbarProps>(({
   className,
   ...props
 }, ref) => {
-  const { searchQuery, setSearchQuery } = useFilesStore();
+  const { searchQuery, setSearchQuery, loading, initialized } = useFilesStore();
   const [localQuery, setLocalQuery] = useState(searchQuery);
+
+  const disabled = loading && !initialized;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,7 +34,7 @@ export const Searchbar = forwardRef<HTMLDivElement, SearchbarProps>(({
 
   return (
     <div
-      className={`searchbar-container ${className || ''}`}
+      className={`searchbar-container ${className || ''} ${disabled ? 'searchbar-container__disabled' : ''}`}
       ref={ref}
       {...props}
     >
@@ -46,9 +48,14 @@ export const Searchbar = forwardRef<HTMLDivElement, SearchbarProps>(({
           placeholder="Search document"
           value={localQuery}
           onChange={handleSearchChange}
+          disabled={disabled}
         />
         {localQuery && (
-          <button className="searchbar-container__main__clear" onClick={handleClearSearch}>
+          <button 
+            className="searchbar-container__main__clear" 
+            onClick={handleClearSearch}
+            disabled={disabled}
+          >
             <img src='/cross.svg' />
           </button>
         )}

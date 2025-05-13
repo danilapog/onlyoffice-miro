@@ -1,8 +1,12 @@
 .searchbar-container {
   width: 100%;
   padding: 8px 0;
-
   box-sizing: border-box;
+}
+
+.searchbar-container__disabled {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .searchbar-container__main {
@@ -37,6 +41,10 @@
   width: 100%;
 }
 
+.searchbar-container__main__input:disabled {
+  cursor: not-allowed;
+}
+
 .searchbar-container__main__input::placeholder {
   color: rgba(5, 0, 56, 0.6);
   white-space: nowrap;
@@ -55,6 +63,10 @@
   opacity: 0.6;
   transition: opacity 0.2s;
   flex-shrink: 0;
+}
+
+.searchbar-container__main__clear:disabled {
+  cursor: not-allowed;
 }
 
 .searchbar-container__main__clear:hover {

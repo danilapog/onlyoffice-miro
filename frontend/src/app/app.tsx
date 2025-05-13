@@ -9,7 +9,9 @@ import { ManagerPage } from '@app/pages/manager';
 import { CreationPage } from '@app/pages/creation';
 import { SettingsPage } from '@app/pages/settings';
 import { useFilesStore } from '@features/file/stores/useFileStore';
+import { CenterLayout } from '@components/CenterLayout';
 import { Button } from '@components/Button';
+import { Spinner } from '@components/Spinner';
 
 import '@app/transitions.css';
 import '@i18n/config';
@@ -34,7 +36,11 @@ const App = () => {
     setPrevPathname(location.pathname);
   }, [location.pathname]);
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return (
+    <CenterLayout style={{ height: '100vh' }}>
+      <Spinner size="large" />
+    </CenterLayout>
+  );
 
   if (!authorized) return (
     <>

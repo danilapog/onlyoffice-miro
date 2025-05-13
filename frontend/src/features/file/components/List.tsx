@@ -1,9 +1,12 @@
 import React, { forwardRef, useEffect } from 'react';
 import { FileItem } from '@features/file/components/Item';
 import { useFilesStore } from '@features/file/stores/useFileStore';
+import { Spinner } from '@components/Spinner';
 
 import { ItemsCreateEvent } from '@mirohq/websdk-types/stable/api/ui';
 import { ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/index';
+
+import '@features/file/components/list.css';
 
 interface FilesListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -20,7 +23,8 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     refreshDocuments,
     loading,
     cursor,
-    setObserverRef
+    setObserverRef,
+    initialized
   } = useFilesStore();
 
   const listenDocumentAdded = async (e: ItemsCreateEvent) => {
@@ -49,9 +53,15 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
   return (
     <div
       ref={ref}
-      className={className}
+      className={`files-list-container ${className || ''}`}
       {...props}
     >
+      {loading && !initialized && (
+        <div className="files-list-container_overlay">
+          <Spinner size="medium" />
+        </div>
+      )}
+
       {docsToRender.map((doc) => (
         <FileItem key={doc.id} document={doc} />
       ))}
@@ -63,9 +73,9 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
             margin: '20px 0'
           }}
         >
-          {loading && (
+          {loading && initialized && (
             <div style={{ textAlign: 'center', padding: '10px' }}>
-              Loading more...
+              <Spinner size="small" />
             </div>
           )}
         </div>
