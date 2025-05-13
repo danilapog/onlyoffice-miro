@@ -16,7 +16,12 @@
     "create": "Create new file ES",
     "auth_error": "Authorization error ES",
     "auth_error_description": "Please install or reinstall the app ES",
-    "auth_error_button": "Reinstall ES"
+    "auth_error_button": "Reinstall ES",
+    "installation_error": "App Installation Required ES",
+    "installation_error_description": "Please install or reinstall the app to continue ES",
+    "installation_error_button": "Install ES",
+    "notconfigured_title": "Configuration required ES",
+    "notconfigured_message": "Please contact your administrator to configure the document server ES"
   },
   "settings": {
     "title": "Settings ES",

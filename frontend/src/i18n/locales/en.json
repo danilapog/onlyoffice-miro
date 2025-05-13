@@ -16,7 +16,12 @@
     "create": "Create new file",
     "auth_error": "Authorization error",
     "auth_error_description": "Please install or reinstall the app",
-    "auth_error_button": "Reinstall"
+    "auth_error_button": "Reinstall",
+    "installation_error": "App Installation Required",
+    "installation_error_description": "Please install or reinstall the app to continue",
+    "installation_error_button": "Install",
+    "notconfigured_title": "Configuration required",
+    "notconfigured_message": "Please contact your administrator to configure the document server"
   },
   "settings": {
     "title": "Settings",

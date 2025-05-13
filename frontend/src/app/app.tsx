@@ -9,8 +9,8 @@ import { ManagerPage } from '@app/pages/manager';
 import { CreationPage } from '@app/pages/creation';
 import { SettingsPage } from '@app/pages/settings';
 import { useFilesStore } from '@features/file/stores/useFileStore';
+import { Installation } from '@features/file/components/Installation';
 import { CenterLayout } from '@components/CenterLayout';
-import { Button } from '@components/Button';
 import { Spinner } from '@components/Spinner';
 
 import '@app/transitions.css';
@@ -42,12 +42,7 @@ const App = () => {
     </CenterLayout>
   );
 
-  if (!authorized) return (
-    <>
-      <Button name='refresh' onClick={refresh} />
-      <div>Please install/reinstall the app</div>
-    </>
-  );
+  if (!authorized) return <Installation />;
 
   return (
     <div className="page-container">
