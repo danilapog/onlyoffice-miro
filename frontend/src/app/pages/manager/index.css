@@ -82,6 +82,10 @@
   flex-direction: column;
 }
 
+.manager-container__button-container {
+  margin-top: 0.75rem;
+}
+
 .manager-container__main__auth-error {
   display: flex;
   flex-direction: column;

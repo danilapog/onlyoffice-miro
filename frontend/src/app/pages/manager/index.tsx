@@ -76,7 +76,7 @@ export const ManagerPage = () => {
             {renderContent()}
           </div>
         </div>
-        <div className='manager-container_shifted'>
+        <div className='manager-container_shifted manager-container__button-container'>
           {!authError && !serverConfigError && (
             <Link 
               to="/create"
