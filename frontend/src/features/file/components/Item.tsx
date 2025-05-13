@@ -59,11 +59,11 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(({
       <span className='file-container__title'>
         {fileDocument.data?.title}
       </span>
-      <span className='file-container__size file-container__text_secondary'>
-        {"99.22KB"}
-      </span>
       <span className='file-container__date file-container__text_secondary'>
         {formatDate(fileDocument.createdAt)}
+      </span>
+      <span className='file-container__date file-container__text_secondary'>
+        {formatDate(fileDocument.modifiedAt)}
       </span>
       <div className="file-container__dropdown-wrapper">
         <button

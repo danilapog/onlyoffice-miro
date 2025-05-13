@@ -40,16 +40,6 @@
   white-space: nowrap;
 }
 
-.file-container__size {
-  max-width: 4rem;
-  margin-right: 1rem;
-  display: inline-block;
-  
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .file-container__date {
   max-width: 4rem;
   margin-right: 1rem;
