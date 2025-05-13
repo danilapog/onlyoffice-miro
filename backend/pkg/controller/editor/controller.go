@@ -174,44 +174,49 @@ func (c *editorController) buildEditorConfig(
 	return config, nil
 }
 
+// TODO: Refactor, move to commons, Add translations
 func (c *editorController) handleGet(ctx echo.Context) error {
 	return c.ExecuteWithTimeout(ctx, 3*time.Second, func(tctx context.Context) error {
-		handleRequestError := func(err error, message string) error {
+		handleRequestError := func(err error, message, lang string) error {
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusBadRequest, message)
+				return ctx.Render(http.StatusOK, "unauthorized", map[string]string{
+					"language":           lang,
+					"authorizationError": message,
+				})
 			}
+
 			return nil
 		}
 
 		params, err := c.extractAndValidateParams(ctx)
-		if err := handleRequestError(err, "failed to extract parameters"); err != nil {
+		if err := handleRequestError(err, "failed to extract parameters", "en"); err != nil {
 			return err
 		}
 
 		settings, auth, err := c.FetchAuthenticationWithSettings(tctx, params.uid, params.tid, params.bid)
-		if err := handleRequestError(err, "failed to fetch required data"); err != nil {
+		if err := handleRequestError(err, "failed to fetch required data", params.lang); err != nil {
 			return err
 		}
 
 		address, secret, err := c.resolveServerSettings(settings)
-		if err := handleRequestError(err, "invalid configuration"); err != nil {
+		if err := handleRequestError(err, "invalid configuration", params.lang); err != nil {
 			return err
 		}
 
 		user, file, err := c.fetchMiroData(tctx, params, auth.AccessToken)
-		if err := handleRequestError(err, "failed to fetch Miro data"); err != nil {
+		if err := handleRequestError(err, "failed to fetch Miro data", params.lang); err != nil {
 			return err
 		}
 
 		user.Lang = params.lang
 		callbackURL := buildCallbackURL(c.Config.Server.CallbackURL, params.fid, params.uid, params.tid, params.bid)
 		config, err := c.buildEditorConfig(tctx, callbackURL, params.bid, user, file, secret)
-		if err := handleRequestError(err, "failed to build editor configuration"); err != nil {
+		if err := handleRequestError(err, "failed to build editor configuration", params.lang); err != nil {
 			return err
 		}
 
 		configJSON, err := json.Marshal(config)
-		if err := handleRequestError(err, "failed to encode configuration"); err != nil {
+		if err := handleRequestError(err, "failed to encode configuration", params.lang); err != nil {
 			return err
 		}
 

@@ -13,6 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TODO: Refactor, move to commons
+
 type TokenClaims struct {
 	User string `json:"user"`
 	Team string `json:"team"`
@@ -50,8 +52,16 @@ func NewAuthMiddleware(
 func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString, err := m.extractor(c)
+		lang := "en"
+		if langParam := c.QueryParam("lang"); langParam != "" {
+			lang = langParam
+		}
+
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Missing authentication")
+			return c.Render(http.StatusOK, "unauthorized", map[string]string{
+				"language":           lang,
+				"authorizationError": "Missing authentication",
+			})
 		}
 
 		m.logger.Info(c.Request().Context(), "authenticating request",
@@ -61,12 +71,18 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 		token, err := m.ValidateToken(tokenString)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
+			return c.Render(http.StatusOK, "unauthorized", map[string]string{
+				"language":           lang,
+				"authorizationError": "Missing authentication",
+			})
 		}
 
 		if m.refresher != nil {
 			if err := m.refresher(c, token); err != nil {
-				return err
+				return c.Render(http.StatusOK, "unauthorized", map[string]string{
+					"language":           lang,
+					"authorizationError": "Missing authentication",
+				})
 			}
 		}
 
@@ -167,13 +183,24 @@ func (m *AuthMiddleware) ClearAuthCookie(c echo.Context) {
 
 func (m *AuthMiddleware) GetCookieExpiration(c echo.Context) error {
 	tokenString, err := m.extractor(c)
+	lang := "en"
+	if langParam := c.QueryParam("lang"); langParam != "" {
+		lang = langParam
+	}
+
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Missing authentication")
+		return c.Render(http.StatusOK, "unauthorized", map[string]string{
+			"language":           lang,
+			"authorizationError": "Missing authentication",
+		})
 	}
 
 	token, err := m.ValidateToken(tokenString)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+		return c.Render(http.StatusOK, "unauthorized", map[string]string{
+			"language":           lang,
+			"authorizationError": "Invalid token",
+		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
