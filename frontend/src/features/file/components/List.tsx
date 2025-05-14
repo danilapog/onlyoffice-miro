@@ -1,6 +1,6 @@
 import React, { forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ItemsCreateEvent } from '@mirohq/websdk-types/stable/api/ui';
+import { ItemsCreateEvent, ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/ui';
 import { ItemsUpdateEvent } from '@mirohq/websdk-types';
 
 import { FileItem } from '@features/file/components/Item';
@@ -54,12 +54,20 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     }
   }
 
+  const listenDocumentDeletedUI = async (e: ItemsDeleteEvent) => {
+    const ids = e.items.map(item => item.id);
+    if (ids.length > 0) {
+      await miroBoard.events.broadcast("documents_deleted", { ids });
+      updateOnDelete(ids);
+    }
+  }
+
   const listenDocumentsAdded = async (_: FilesAddedEvent) => {
     miroBoard.notifications.showInfo(t("notifications.documents_added"));
   };
 
-  const listenDocumentRemoved = async (event: FileDeletedEvent) => {
-    updateOnDelete([event.id]);
+  const listenDocumentsDeleted = async (event: FileDeletedEvent) => {
+    updateOnDelete(event.ids);
   }
 
   const listenDocumentUpdated = async (e: ItemsUpdateEvent) => {
@@ -87,17 +95,21 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
       refreshDocuments();
 
     miroBoard.ui.on("items:create", listenDocumentAddedUI);
-    miroBoard.events.on("documents_added", listenDocumentsAdded);
-    miroBoard.events.on("document_deleted", listenDocumentRemoved);
+    miroBoard.ui.on("items:delete", listenDocumentDeletedUI);
     miroBoard.ui.on("experimental:items:update", listenDocumentUpdated);
+
     miroBoard.events.on("document_created", listenDocumentCreated);
+    miroBoard.events.on("documents_added", listenDocumentsAdded);
+    miroBoard.events.on("documents_deleted", listenDocumentsDeleted);
 
     return () => {
       miroBoard.ui.off("items:create", listenDocumentAddedUI);
-      miroBoard.events.off("documents_added", listenDocumentsAdded);
-      miroBoard.events.off("document_deleted", listenDocumentRemoved);
+      miroBoard.ui.off("items:delete", listenDocumentDeletedUI);
       miroBoard.ui.off("experimental:items:update", listenDocumentUpdated);
+
       miroBoard.events.off("document_created", listenDocumentCreated);
+      miroBoard.events.off("documents_added", listenDocumentsAdded);
+      miroBoard.events.off("documents_deleted", listenDocumentsDeleted);
     };
   }, []);
 

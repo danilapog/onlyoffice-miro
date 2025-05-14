@@ -13,7 +13,7 @@ export type FileCreatedEvent = {
 } & FileCreatedResponse;
 
 export type FileDeletedEvent = {
-  id: string;
+  ids: string[];
 };
 
 export type FilesAddedEvent = {
