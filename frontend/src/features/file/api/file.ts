@@ -1,5 +1,6 @@
+import { Document, Pageable } from "@features/file/lib/types";
+
 import { useApplicationStore } from "@stores/useApplicationStore";
-import { Document, Pageable } from "@features/file/lib/type";
 
 export const openEditor = async (doc: Document) => {
   const { board: miroBoard } = window.miro;
@@ -39,7 +40,7 @@ export const fetchDocuments = async (cursor?: string | null, retryCount = 0): Pr
 
   if (response.status === 401) throw new Error("not authorized");
   if (response.status === 403) throw new Error("access denied");
-  if (response.status === 409) throw new Error("document_server_not_configured");
+  if (response.status === 409) throw new Error("document server configuration error");
 
   if (response.status !== 200) {
     if (retryCount < maxRetries) {

@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@components/Button';
 
-import '@features/file/components/installation.css';
+import '@features/manager/components/installation.css';
 
 export const Installation = () => {
   const { t } = useTranslation();
-  
   return (
     <div className="installation-container">
       <img src="/notconfigured.svg" alt="Configuration Error" className="installation-container__icon" />

@@ -1,24 +1,4 @@
-export type FileCreatedResponse = {
-  id: string;
-  createdAt: string;
-  modifiedAt: string;
-  links: {
-    self: string;
-  };
-}
-
-export type FileCreatedEvent = {
-  name: string;
-  type: string;
-} & FileCreatedResponse;
-
-export type FileDeletedEvent = {
-  ids: string[];
-};
-
-export type FilesAddedEvent = {
-  items: FileCreatedResponse[];
-};
+import { FileCreatedResponse } from "@features/manager/lib/types";
 
 export const createFile = async (name: string, type: string): Promise<FileCreatedResponse | null> => {
   try {

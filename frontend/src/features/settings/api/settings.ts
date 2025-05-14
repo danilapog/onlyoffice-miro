@@ -1,20 +1,4 @@
-export interface SettingsRequest {
-  address: string;
-  header: string;
-  secret: string;
-  demo: boolean;
-}
-
-export interface SettingsResponse {
-  address: string;
-  header: string;
-  secret: string;
-  demo: {
-    team_id: string;
-    enabled: boolean;
-    started: string;
-  };
-}
+import { SettingsRequest, SettingsResponse } from "@features/settings/lib/types";
 
 export const saveSettings = async (settings: SettingsRequest) => {
   try {
@@ -37,7 +21,7 @@ export const saveSettings = async (settings: SettingsRequest) => {
     });
 
     if (response.ok) {
-      await miroBoard.setAppData("settings", Date.now());
+      // await miroBoard.setAppData("settings", Date.now());
       return true;
     }
 
@@ -82,11 +66,43 @@ export const fetchSettings: () => Promise<SettingsResponse> = async () => {
       secret: "",
     };
 
-  throw new Error("failed to fetch settings");
+  const maxRetries = 3;
+  const retryWithBackoff = async (retryCount = 0): Promise<SettingsResponse> => {
+    try {
+      if (retryCount >= maxRetries)
+        throw new Error("Maximum retries reached");
+
+      const backoffTime = Math.pow(2, retryCount) * 250;
+      await new Promise(resolve => setTimeout(resolve, backoffTime));
+      
+      const retryResponse = await fetch(`${import.meta.env.VITE_MIRO_ONLYOFFICE_BACKEND}/${path}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-miro-signature': token,
+        }
+      });
+
+      if (retryResponse.ok) {
+        const data = await retryResponse.json();
+        return {
+          ...data,
+        };
+      }
+
+      return retryWithBackoff(retryCount + 1);
+    } catch (error) {
+      if (retryCount >= maxRetries)
+        throw new Error("failed to fetch settings after multiple retries");
+      return retryWithBackoff(retryCount + 1);
+    }
+  };
+
+  return retryWithBackoff();
 }
 
-export const checkSettings: () => Promise<boolean> = async () => {
-  const { board: miroBoard } = window.miro;
-  const settings = await miroBoard.getAppData("settings");
-  return !!settings;
-}; 
+// export const checkSettings: () => Promise<boolean> = async () => {
+//   const { board: miroBoard } = window.miro;
+//   const settings = await miroBoard.getAppData("settings");
+//   return !!settings;
+// }; 

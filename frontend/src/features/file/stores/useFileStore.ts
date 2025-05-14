@@ -1,126 +1,126 @@
 import { create } from 'zustand';
-import { Document } from '@features/file/lib/type';
-import { convertDocument, deleteDocument, fetchDocuments, navigateDocument } from '@features/file/api/file';
+
+import { Document } from '@features/file/lib/types';
+
+import {
+  convertDocument,
+  deleteDocument,
+  fetchDocuments,
+  navigateDocument,
+} from '@features/file/api/file';
+
+import { useEmitterStore } from '@stores/useEmitterStore';
 
 interface FilesState {
-  searchQuery: string;
-  filteredDocuments: Document[];
   documents: Document[];
-  loading: boolean;
-  cursor: string | null;
+  filteredDocuments: Document[];
+
   activeDropdown: string | null;
+  cursor: string | null;
+  searchQuery: string;
+
   initialized: boolean;
+  loading: boolean;
+  converting: boolean;
+
   authError: boolean;
   serverConfigError: boolean;
 
-  refreshDocuments: () => Promise<void>;
+  setSearchQuery: (query: string) => void;
+  setObserverRef: (node: HTMLElement | null) => void;
   toggleDropdown: (id: string | null) => void;
+
+  loadMoreDocuments: () => Promise<void>;
+  refreshDocuments: () => Promise<void>;
+
   navigateDocument: (document: Document) => void;
   downloadPdf: (document: Document) => void;
   deleteDocument: (document: Document) => Promise<void>;
-  setSearchQuery: (query: string) => void;
-  searchDocuments: () => void;
-  loadMoreDocuments: () => Promise<void>;
-  setObserverRef: (node: HTMLElement | null) => void;
+
   updateOnCreate: (documents: Document[]) => void;
   updateOnUpdate: (documents: Document[]) => void;
   updateOnDelete: (documentIds: string[]) => void;
 }
 
 const filterDocuments = (documents: Document[], query: string): Document[] => {
-  if (!query.trim()) {
+  if (!query.trim())
     return documents;
-  }
-  
+
   const lowerCaseQuery = query.toLowerCase();
-  return documents.filter(doc => 
+  return documents.filter(doc =>
     doc.data?.title?.toLowerCase().includes(lowerCaseQuery)
   );
 };
 
 export const useFilesStore = create<FilesState>((set, get) => ({
-  searchQuery: '',
   documents: [],
   filteredDocuments: [],
-  loading: false,
-  cursor: null,
+
   activeDropdown: null,
+  cursor: null,
+  searchQuery: '',
+
   initialized: false,
+  loading: false,
+  converting: false,
+
   authError: false,
   serverConfigError: false,
 
-  refreshDocuments: async () => {
-    const { loading, initialized } = get();
-    if (loading) return;
+  setSearchQuery: (searchQuery: string) => {
+    set({ searchQuery });
+    const { documents } = get();
+    const filteredDocuments = filterDocuments(documents, searchQuery);
+    set({ filteredDocuments });
+  },
+  setObserverRef: (node: HTMLElement | null) => {
+    if (!node) return;
 
-    set({ loading: true, authError: false, serverConfigError: false });
-    try {
-      const pageable = await fetchDocuments();
-      
-      // If this is the first load or a refresh after document creation/deletion
-      if (!initialized || !get().cursor) {
-        set({ 
-          documents: pageable.data,
-          loading: false, 
-          cursor: pageable.cursor,
-          initialized: true
-        });
-        
-        // If we have a cursor on initial load, automatically load more
-        if (pageable.cursor) {
-          await get().loadMoreDocuments();
-        }
-      } else {
-        // For subsequent refreshes (after document creation/deletion)
-        set(state => ({ 
-          documents: [...pageable.data, ...state.documents],
-          loading: false,
-          cursor: pageable.cursor || state.cursor
-        }));
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === "not authorized" || error.message === "access denied") {
-          set({ loading: false, authError: true });
-        } else if (error.message === "document_server_not_configured") {
-          set({ loading: false, serverConfigError: true });
-        } else {
-          set({ loading: false });
-        }
-      } else {
-        set({ loading: false });
-      }
-    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !get().loading && get().cursor)
+          get().loadMoreDocuments();
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  },
+  toggleDropdown: (id: string | null) => {
+    const { activeDropdown } = get();
+    if (activeDropdown === id)
+      set({ activeDropdown: null });
+    else
+      set({ activeDropdown: id });
   },
 
   loadMoreDocuments: async () => {
     const { loading, cursor, initialized } = get();
-    if (loading || !cursor || !initialized) return;
+    if (loading || !cursor || !initialized)
+      return;
 
     set({ loading: true });
     try {
       const pageable = await fetchDocuments(cursor);
-      
       if (!pageable.data.length) {
         set({ loading: false, cursor: null });
         return;
       }
 
-      set(state => ({ 
+      set(state => ({
         documents: [...state.documents, ...pageable.data],
         loading: false,
         cursor: pageable.cursor,
       }));
 
-      // If we still have a cursor, continue loading
-      if (pageable.cursor) {
+      if (pageable.cursor)
         await get().loadMoreDocuments();
-      }
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "not authorized" || error.message === "access denied") {
           set({ loading: false, authError: true });
-        } else if (error.message === "document_server_not_configured") {
+        } else if (error.message === "document server configuration error") {
           set({ loading: false, serverConfigError: true });
         } else {
           set({ loading: false });
@@ -132,78 +132,83 @@ export const useFilesStore = create<FilesState>((set, get) => ({
       }
     }
   },
+  refreshDocuments: async () => {
+    const { loading, initialized } = get();
+    if (loading) return;
 
-  setObserverRef: (node: HTMLElement | null) => {
-    if (!node) return;
+    set({ loading: true, authError: false, serverConfigError: false });
+    try {
+      const pageable = await fetchDocuments();
+      if (!initialized || !get().cursor) {
+        set({
+          documents: pageable.data,
+          loading: false,
+          cursor: pageable.cursor,
+          initialized: true
+        });
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !get().loading && get().cursor) {
-          get().loadMoreDocuments();
+        if (pageable.cursor)
+          await get().loadMoreDocuments();
+      } else {
+        set(state => ({
+          documents: [...pageable.data, ...state.documents],
+          loading: false,
+          cursor: pageable.cursor || state.cursor
+        }));
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "not authorized" || error.message === "access denied") {
+          set({ loading: false, authError: true });
+        } else if (error.message === "document server configuration error") {
+          set({ loading: false, serverConfigError: true });
+        } else {
+          set({ loading: false });
         }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  },
-
-  toggleDropdown: (id: string | null) => {
-    const { activeDropdown } = get();
-    if (activeDropdown === id) {
-      set({ activeDropdown: null });
-    } else {
-      set({ activeDropdown: id });
+      } else {
+        set({ loading: false });
+      }
     }
   },
 
   navigateDocument: async (document: Document) => {
     await navigateDocument(document.id);
   },
-
   downloadPdf: async (document: Document) => {
-    const response = await convertDocument(document.id);
-    const { url, token } = response;
-    const cresponse = await fetch(`${url}/converter`, {
-      method: 'POST',
-      body: JSON.stringify({
-        token,
-      }),
-    });
-    const { fileUrl } = await cresponse.json();
-    window.open(fileUrl, '_blank');
-    set({ activeDropdown: null });
+    try {
+      set({ converting: true });
+      const response = await convertDocument(document.id);
+      const { url, token } = response;
+      const cresponse = await fetch(`${url}/converter`, {
+        method: 'POST',
+        body: JSON.stringify({
+          token,
+        }),
+      });
+      const { fileUrl } = await cresponse.json();
+      window.open(fileUrl, '_blank');
+      set({ activeDropdown: null, converting: false });
+    } catch (error) {
+      console.error('Error converting the document to pdf:', error);
+      set({ converting: false });
+    }
   },
-
   deleteDocument: async (document: Document) => {
+    const emitterStore = useEmitterStore.getState();
     await deleteDocument(document.id);
-    await miro.board.events.broadcast("document_deleted", {
-      id: document.id,
-    });
+    await emitterStore.emitDocumentDeleted(document.id);
     set({ activeDropdown: null });
-    await get().refreshDocuments();
-  },
-
-  setSearchQuery: (searchQuery: string) => {
-    set({ searchQuery });
-    get().searchDocuments();
-  },
-
-  searchDocuments: () => {
-    const { documents, searchQuery } = get();
-    const filteredDocuments = filterDocuments(documents, searchQuery);
-    set({ filteredDocuments });
+    get().updateOnDelete([document.id]);
   },
 
   updateOnCreate: (documents: Document[]) => {
     set(state => {
       const existing = new Set(state.documents.map(doc => doc.id));
       const docs = documents.filter(doc => !existing.has(doc.id));
-      
+
       if (docs.length === 0)
         return state;
-      
+
       const merged = [...state.documents, ...docs];
       return {
         documents: merged,
@@ -211,7 +216,6 @@ export const useFilesStore = create<FilesState>((set, get) => ({
       };
     });
   },
-
   updateOnUpdate: (documents: Document[]) => {
     set(state => {
       const docsMap = new Map(documents.map(doc => [doc.id, doc]));
@@ -229,10 +233,9 @@ export const useFilesStore = create<FilesState>((set, get) => ({
       };
     });
   },
-
-  updateOnDelete: (documentIds: string[]) => {
+  updateOnDelete: (ids: string[]) => {
     set(state => {
-      const docs = state.documents.filter(doc => !documentIds.includes(doc.id));
+      const docs = state.documents.filter(doc => !ids.includes(doc.id));
       return {
         documents: docs,
         filteredDocuments: filterDocuments(docs, state.searchQuery),

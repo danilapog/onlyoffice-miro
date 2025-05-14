@@ -13,6 +13,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+
   overflow-y: auto;
 }
 
@@ -22,19 +23,22 @@
 }
 
 .creator-container__form {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 .creator-container__form-group {
   width: 100%;
+
   margin-bottom: 0.75rem;
 }
 
 .creator-container__label {
   display: block;
+
   margin-bottom: 0.75rem;
+
   font-size: 0.875rem;
   font-weight: 400;
   color: #333333;
@@ -47,17 +51,18 @@
 
 .creator-container__button-wrapper {
   width: 100%;
+
   margin-top: 0.5rem;
 }
 
 .creator-container__button-container {
+  box-sizing: border-box;
   width: 100%;
   position: sticky;
   bottom: 0;
+  flex-shrink: 0;
 
   padding: 1rem 1.125rem;
 
   background-color: white;
-  box-sizing: border-box;
-  flex-shrink: 0;
 }

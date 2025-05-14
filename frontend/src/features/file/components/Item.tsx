@@ -1,11 +1,14 @@
 import React, { forwardRef, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useFilesStore } from '@features/file/stores/useFileStore';
+import { Document } from '@features/file/lib/types';
+
 import { openEditor } from '@features/file/api/file';
+
 import { getIcon } from '@features/file/utils/icon';
 import { formatDate } from '@features/file/utils/date';
-import { Document } from '@features/file/lib/type';
+
+import { useFilesStore } from '@features/file/stores/useFileStore';
 
 import '@features/file/components/item.css';
 
@@ -22,6 +25,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(({
   const {
     activeDropdown,
     toggleDropdown,
+    converting,
     navigateDocument,
     downloadPdf,
     deleteDocument
@@ -101,6 +105,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(({
                 e.stopPropagation();
                 downloadPdf(fileDocument);
               }}
+              disabled={converting}
             >
               {t('file.download')}
             </button>

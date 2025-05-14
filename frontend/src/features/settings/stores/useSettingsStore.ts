@@ -1,13 +1,17 @@
 import { create } from 'zustand';
-import { checkSettings, fetchSettings, saveSettings } from '@features/settings/api/settings';
+
+// import { checkSettings, fetchSettings, saveSettings } from '@features/settings/api/settings';
+import { fetchSettings, saveSettings } from '@features/settings/api/settings';
 
 interface SettingsState {
   address: string;
   header: string;
   secret: string;
-  persistedCredentials: boolean;
-  demo: boolean;
   demoStarted: string;
+
+  demo: boolean;
+  persistedCredentials: boolean;
+
   loading: boolean;
   hasSettings: boolean;
   error: string | null;
@@ -24,9 +28,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   address: '',
   header: '',
   secret: '',
-  persistedCredentials: false,
-  demo: false,
   demoStarted: '',
+
+  demo: false,
+  persistedCredentials: false,
+
   loading: false,
   hasSettings: false,
   error: null,
@@ -34,7 +40,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAddress: (value) => set({ address: value }),
   setHeader: (value) => set({ header: value }),
   setSecret: (value) => set({ secret: value }),
-  setDemo: (value ) => set({ demo: value }),
+  setDemo: (value) => set({ demo: value }),
   initializeSettings: async () => {
     set({ loading: true, error: null });
     try {
@@ -59,8 +65,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         error: isAccessDenied ? 'access denied' : null,
       });
     } finally {
-      const hasSettings = await checkSettings();
-      set({ hasSettings });
+      const { demoStarted, persistedCredentials } = get();
+      const isDemoExpired = demoStarted ? 
+      (() => {
+        const startTime = new Date(demoStarted).getTime();
+        const expiryDays = parseInt(import.meta.env.VITE_ASC_DEMO_EXPIRATION_DAYS || '30', 10);
+        const expiryTime = startTime + (expiryDays * 24 * 60 * 60 * 1000);
+        const currentTime = Date.now();      
+        return currentTime > expiryTime;
+      })() : false;
+      // const hasSettings = await checkSettings();
+      set({ hasSettings: !isDemoExpired || persistedCredentials });
     }
   },
 

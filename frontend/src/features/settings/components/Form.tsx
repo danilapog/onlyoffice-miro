@@ -1,18 +1,19 @@
 import React, { forwardRef, FormEvent, useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-
-import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
-import { Banner } from '@features/settings/components/Banner';
-import { FormInput } from '@components/Input';
-import { Button } from '@components/Button';
+import { useTranslation } from 'react-i18next';
 
 import { validateAddress, validateShortText } from '@utils/validator';
 
-import '@features/settings/components/form.css';
+import { Button } from '@components/Button';
+import { FormInput } from '@components/Input';
 
+import { Banner } from '@features/settings/components/Banner';
+
+import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
 import { useApplicationStore } from '@stores/useApplicationStore';
-import { useFilesStore } from '@features/file/stores/useFileStore';
+import { useEmitterStore } from '@stores/useEmitterStore';
+
+import '@features/settings/components/form.css';
 
 interface FormProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -39,8 +40,8 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
     setDemo,
     saveSettings,
   } = useSettingsStore();
-  const { refresh } = useApplicationStore();
-  const { refreshDocuments } = useFilesStore();
+  const { refreshAuthorization } = useApplicationStore();
+  const { emitRefreshDocuments } = useEmitterStore();
 
   const isDemoExpired = demoStarted ? 
     (() => {
@@ -105,10 +106,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(({
     e.preventDefault();
     
     if (validateForm()) {
-      // TODO: This is a hack to refresh the page after the settings are saved. Refactor stores to handle states properly
       await saveSettings();
-      await refreshDocuments();
-      await refresh();
+      await emitRefreshDocuments();
+      await refreshAuthorization();
       navigate('/');
     }
   };

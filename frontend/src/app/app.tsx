@@ -1,38 +1,47 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React, { StrictMode, useEffect, useRef, useState } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { createRoot } from 'react-dom/client';
+
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 
-import { useApplicationStore } from '@stores/useApplicationStore';
-import { ManagerPage } from '@app/pages/manager';
-import { CreationPage } from '@app/pages/creation';
-import { SettingsPage } from '@app/pages/settings';
-import { useFilesStore } from '@features/file/stores/useFileStore';
-import { Installation } from '@features/file/components/Installation';
 import { CenterLayout } from '@components/CenterLayout';
 import { Spinner } from '@components/Spinner';
+
+import { CreationPage } from '@app/pages/creation';
+import { Installation } from '@features/manager/components/Installation';
+import { ManagerPage } from '@app/pages/manager';
+import { SettingsPage } from '@app/pages/settings';
+
+import { useFilesStore } from '@features/file/stores/useFileStore';
+import { useApplicationStore } from '@stores/useApplicationStore';
+import { EmitterEvents } from '@stores/useEmitterStore';
 
 import '@app/transitions.css';
 import '@i18n/config';
 
 const App = () => {
-  const { loading, authorized, admin, reload, refresh } = useApplicationStore();
-  const { refreshDocuments } = useFilesStore();
-  const location = useLocation();
   const nodeRef = useRef(null);
+  const location = useLocation();
+  const { refreshDocuments } = useFilesStore();
+  const { loading, authorized, admin, reloadAuthorization } = useApplicationStore();
+
   const [prevPathname, setPrevPathname] = useState(location.pathname);
   
   useEffect(() => {
-    reload();
+    reloadAuthorization();
     refreshDocuments();
+
+    miro?.board.events.on(EmitterEvents.REFRESH_DOCUMENTS, refreshDocuments);
+
+    return () => {
+      miro?.board.events.off(EmitterEvents.REFRESH_DOCUMENTS, refreshDocuments);
+    };
   }, []);
 
   useEffect(() => {
     const isBack = prevPathname.length > location.pathname.length;
-    if (!location.state) {
+    if (!location.state)
       location.state = { isBack };
-    }
     setPrevPathname(location.pathname);
   }, [location.pathname]);
 

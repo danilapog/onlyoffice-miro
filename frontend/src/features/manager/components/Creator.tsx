@@ -2,12 +2,15 @@ import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { useManagerStore } from '@features/manager/stores/useManagerStore';
-import { useFilesStore } from '@features/file/stores/useFileStore';
-import { FormInput } from '@components/Input';
+import { FileInfo } from '@lib/types';
+
 import { Button } from '@components/Button';
+import { FormInput } from '@components/Input';
 import { Label } from '@components/Label';
 import { Select, SelectOption } from '@components/Select';
+
+import { useCreatorStore } from '@features/manager/stores/useCreatorStore';
+import { useEmitterStore } from '@stores/useEmitterStore';
 
 import '@features/manager/components/creator.css';
 
@@ -30,10 +33,9 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
     resetSelected,
     createFile,
     getSupportedTypes,
-  } = useManagerStore();
-  const {
-    updateOnCreate
-  } = useFilesStore();
+  } = useCreatorStore();
+  const { emitDocumentCreated } = useEmitterStore();
+
   const [nameError, setNameError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
       setNameError(undefined);
   }, [selectedName, t]);
 
-  const fileTypeOptions: SelectOption[] = useMemo(() => {
+  const typeOptions: SelectOption[] = useMemo(() => {
     const supportedTypes = getSupportedTypes();
     return supportedTypes.map(type => ({
       value: type,
@@ -61,7 +63,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
     const createdFile = await createFile();
     if (!createdFile) return null;
 
-    await miro.board.events.broadcast("document_created", {
+    emitDocumentCreated({
       id: createdFile.id,
       name: `${selectedName}.${selectedType}`,
       type: selectedType,
@@ -70,22 +72,9 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
       links: {
         self: createdFile.links.self,
       },
-    });
-
-    const newDocument = { 
-      id: createdFile.id, 
-      data: { 
-        title: `${selectedName}.${selectedType}`, 
-        documentUrl: createdFile.links.self 
-      }, 
-      createdAt: createdFile.createdAt, 
-      modifiedAt: createdFile.modifiedAt,
-      type: "document",
-    };
-    updateOnCreate([newDocument]);
-
+    } as FileInfo);
     resetSelected();
-    
+
     return createdFile;
   }
 
@@ -113,7 +102,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
             <div className='creator-container__form-group'>
               <Label className='creator-container__label'>{t('creation.fileType')}</Label>
               <Select 
-                options={fileTypeOptions}
+                options={typeOptions}
                 value={selectedType}
                 onChange={setSelectedType}
                 className='creator-container__select'

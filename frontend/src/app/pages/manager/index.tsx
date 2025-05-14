@@ -2,19 +2,22 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { useFilesStore } from '@features/file/stores/useFileStore';
-import { Empty } from '@features/file/components/Empty';
-import { FilesList } from '@features/file/components/List';
-import { Searchbar } from '@features/file/components/Search';
-import { NotConfigured } from '@features/file/components/NotConfigured';
-import { Installation } from '@features/file/components/Installation';
 import { Button } from '@components/Button';
 import { Layout } from '@components/Layout';
 import { Spinner } from '@components/Spinner';
 
-import "@app/pages/manager/index.css";
+import { Empty } from '@features/manager/components/Empty';
+import { FilesList } from '@features/file/components/List';
+import { Installation } from '@features/manager/components/Installation';
+import { NotConfigured } from '@features/manager/components/NotConfigured';
+import { Searchbar } from '@features/file/components/Search';
+
+import { useFilesStore } from '@features/file/stores/useFileStore';
 import { useApplicationStore } from '@stores/useApplicationStore';
-import { SettingsPage } from '../settings';
+
+import { SettingsPage } from '@app/pages/settings';
+
+import "@app/pages/manager/index.css";
 
 export const ManagerPage = () => {
   const { t } = useTranslation();
@@ -35,33 +38,29 @@ export const ManagerPage = () => {
     return <SettingsPage forceDisableBack={true} />;
 
   const renderContent = () => {
-    if (authError) {
+    if (authError)
       return <Installation />;
-    }
     
-    if (serverConfigError && !admin) {
+    if (serverConfigError && !admin)
       return <NotConfigured />;
-    }
 
-    if (loading && documents.length === 0) {
+    if (loading && documents.length === 0)
       return <div className="manager-container__main__loading">
         <Spinner size="large" />
       </div>;
-    }
 
-    if (documents.length === 0) {
+
+    if (documents.length === 0)
       return <Empty 
         title={t('empty.title')}
         subtitle={t('empty.subtitle')}
       />;
-    }
-    
-    if (searchQuery !== '' && filteredDocuments.length === 0) {
+
+    if (searchQuery !== '' && filteredDocuments.length === 0)
       return <Empty 
         title={t('empty.search_title')}
         subtitle={t('empty.search_subtitle')}
       />;
-    }
     
     return <FilesList />;
   };

@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 
-import '@features/file/components/empty.css';
+import '@features/manager/components/empty.css';
 
 interface EmptyProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;

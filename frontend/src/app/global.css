@@ -1,3 +1,7 @@
 :root {
+  --main-button-color: #4262FF;
   --main-secondary-text-color: #5F5C80;
+  --main-text-color: #050038;
+  --main-error-color: #E53935;
+  --subtitle-text-color: #656B81;
 }

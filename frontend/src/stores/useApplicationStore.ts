@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
+
 import { fetchAuthorization } from '@api/authorize';
+import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
 
 interface ApplicationState {
   loading: boolean;
@@ -9,8 +10,8 @@ interface ApplicationState {
   hasCookie: boolean;
   cookieExpiresAt: number | null;
 
-  reload: () => Promise<void>;
-  refresh: () => Promise<void>;
+  reloadAuthorization: () => Promise<void>;
+  refreshAuthorization: () => Promise<void>;
   authorize: () => Promise<void>;
   shouldRefreshCookie: () => boolean;
 }
@@ -22,9 +23,8 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   hasCookie: false,
   cookieExpiresAt: null,
 
-  reload: async () => {
+  reloadAuthorization: async () => {
     set({ loading: true, authorized: false, admin: false });
-
     try {
       const settingsStore = useSettingsStore.getState();
       await settingsStore.initializeSettings();
@@ -47,7 +47,8 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       window.location.hash = '#/';
     }
   },
-  refresh: async () => {
+
+  refreshAuthorization: async () => {
     try {
       const settingsStore = useSettingsStore.getState();
       await settingsStore.initializeSettings();
@@ -61,6 +62,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       set({ authorized: !unauthorized, admin: (!unauthorized && !forbidden) });
     }
   },
+
   authorize: async () => {
     try {
       set({ hasCookie: false });
@@ -80,6 +82,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       });
     }
   },
+
   shouldRefreshCookie: () => {
     const { hasCookie, cookieExpiresAt } = get();
     if (!hasCookie) return true;

@@ -1,14 +1,20 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ItemsCreateEvent, ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/ui';
 import { ItemsUpdateEvent } from '@mirohq/websdk-types';
+import { ItemsCreateEvent, ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/ui';
 
-import { FileItem } from '@features/file/components/Item';
-import { useFilesStore } from '@features/file/stores/useFileStore';
+import { Document } from '@features/file/lib/types';
+import { FileCreatedEvent, FilesDeletedEvent, FilesAddedEvent } from '@lib/types';
+
 import { Spinner } from '@components/Spinner';
+import { FileItem } from '@features/file/components/Item';
+
+import { useFilesStore } from '@features/file/stores/useFileStore';
+import { EmitterEvents, useEmitterStore } from '@stores/useEmitterStore';
 
 import '@features/file/components/list.css';
-import { FileCreatedEvent, FileDeletedEvent, FilesAddedEvent } from '@features/manager/api/file';
+
+const documentType = "document";
 
 interface FilesListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -17,7 +23,6 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
   className,
   ...props
 }, ref) => {
-  const { board: miroBoard } = window.miro;
   const { t } = useTranslation();
   const {
     searchQuery,
@@ -32,51 +37,48 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     updateOnDelete,
     updateOnUpdate
   } = useFilesStore();
+  const { 
+    emitDocumentsAdded,
+    emitDocumentsDeleted,
+    emitNotification,
+  } = useEmitterStore();
 
-  const listenDocumentAddedUI = async (e: ItemsCreateEvent) => {
-    const docs = e.items.filter(doc => doc.type === 'document').map(doc => {
+  const listenDocumentAddedUI = useCallback(async (e: ItemsCreateEvent) => {
+    const events = e.items.filter(doc => doc.type === documentType).map(doc => {
       const documentItem = doc as any;
       return {
         id: documentItem?.id,
-        data: {
-          title: documentItem?.name || '',
-          documentUrl: documentItem?.links?.self || '',
-        },
+        name: documentItem?.name || '',
         createdAt: documentItem?.createdAt,
         modifiedAt: documentItem?.modifiedAt,
-        type: "document",
-      };
+        links: {
+          self: documentItem?.links?.self || ''
+        },
+        type: documentType,
+      } as FileCreatedEvent;
     });
 
-    if (docs.length > 0) {
-      await miroBoard.events.broadcast("documents_added", { items: docs });
-      miroBoard.notifications.showInfo(t("notifications.documents_added"));
+    if (events.length > 0) {
+      await emitDocumentsAdded(events);
+      await emitNotification(t("notifications.documents_added"));
     }
-  }
+  }, [emitDocumentsAdded, emitNotification, t]);
 
-  const listenDocumentDeletedUI = async (e: ItemsDeleteEvent) => {
+  const listenDocumentDeletedUI = useCallback(async (e: ItemsDeleteEvent) => {
     const ids = e.items.map(item => item.id);
     if (ids.length > 0) {
-      await miroBoard.events.broadcast("documents_deleted", { ids });
+      await emitDocumentsDeleted(ids);
       updateOnDelete(ids);
     }
-  }
+  }, [emitDocumentsDeleted, updateOnDelete]);
 
-  const listenDocumentsAdded = async (_: FilesAddedEvent) => {
-    miroBoard.notifications.showInfo(t("notifications.documents_added"));
-  };
-
-  const listenDocumentsDeleted = async (event: FileDeletedEvent) => {
-    updateOnDelete(event.ids);
-  }
-
-  const listenDocumentUpdated = async (e: ItemsUpdateEvent) => {
-    const docs = e.items.filter(doc => doc.type === 'document');
+  const listenDocumentUpdatedUI = useCallback(async (e: ItemsUpdateEvent) => {
+    const docs = e.items.filter(doc => doc.type === documentType);
     if (docs.length > 0)
       updateOnUpdate(docs as any);
-  }
+  }, [updateOnUpdate]);
 
-  const listenDocumentCreated = async (event: FileCreatedEvent) => {
+  const listenDocumentCreated = useCallback(async (event: FileCreatedEvent) => {
     const newDocument = { 
       id: event.id, 
       data: { 
@@ -85,35 +87,43 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
       }, 
       createdAt: event.createdAt, 
       modifiedAt: event.modifiedAt,
-      type: "document",
-    };
+      type: documentType,
+    } as Document;
     updateOnCreate([newDocument]);
-  }
+  }, [updateOnCreate]);
+
+  const listenDocumentsAdded = useCallback(async (_: FilesAddedEvent) => {
+    await emitNotification(t("notifications.documents_added"));
+  }, [emitNotification, t]);
+
+  const listenDocumentsDeleted = useCallback(async (event: FilesDeletedEvent) => {
+    updateOnDelete(event.ids);
+  }, [updateOnDelete]);
 
   useEffect(() => {
     if (!initialized)
       refreshDocuments();
 
-    miroBoard.ui.on("items:create", listenDocumentAddedUI);
-    miroBoard.ui.on("items:delete", listenDocumentDeletedUI);
-    miroBoard.ui.on("experimental:items:update", listenDocumentUpdated);
+    miro?.board.ui.on(EmitterEvents.MIRO_ITEMS_CREATED, listenDocumentAddedUI);
+    miro?.board.ui.on(EmitterEvents.MIRO_ITEMS_DELETED, listenDocumentDeletedUI);
+    miro?.board.ui.on(EmitterEvents.MIRO_ITEMS_UPDATED, listenDocumentUpdatedUI);
 
-    miroBoard.events.on("document_created", listenDocumentCreated);
-    miroBoard.events.on("documents_added", listenDocumentsAdded);
-    miroBoard.events.on("documents_deleted", listenDocumentsDeleted);
+    miro?.board.events.on(EmitterEvents.DOCUMENT_CREATED, listenDocumentCreated);
+    miro?.board.events.on(EmitterEvents.DOCUMENTS_ADDED, listenDocumentsAdded);
+    miro?.board.events.on(EmitterEvents.DOCUMENTS_DELETED, listenDocumentsDeleted);
 
     return () => {
-      miroBoard.ui.off("items:create", listenDocumentAddedUI);
-      miroBoard.ui.off("items:delete", listenDocumentDeletedUI);
-      miroBoard.ui.off("experimental:items:update", listenDocumentUpdated);
-
-      miroBoard.events.off("document_created", listenDocumentCreated);
-      miroBoard.events.off("documents_added", listenDocumentsAdded);
-      miroBoard.events.off("documents_deleted", listenDocumentsDeleted);
+      miro?.board.ui.off(EmitterEvents.MIRO_ITEMS_CREATED, listenDocumentAddedUI);
+      miro?.board.ui.off(EmitterEvents.MIRO_ITEMS_DELETED, listenDocumentDeletedUI);
+      miro?.board.ui.off(EmitterEvents.MIRO_ITEMS_UPDATED, listenDocumentUpdatedUI);
+      
+      miro?.board.events.off(EmitterEvents.DOCUMENT_CREATED, listenDocumentCreated);
+      miro?.board.events.off(EmitterEvents.DOCUMENTS_ADDED, listenDocumentsAdded);
+      miro?.board.events.off(EmitterEvents.DOCUMENTS_DELETED, listenDocumentsDeleted);
     };
   }, []);
 
-  const docsToRender = searchQuery ? filteredDocuments : documents;
+  const docs = searchQuery ? filteredDocuments : documents;
   
   return (
     <div
@@ -127,7 +137,7 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
         </div>
       )}
 
-      {docsToRender.map((doc) => (
+      {docs.map((doc) => (
         <FileItem key={doc.id} document={doc} />
       ))}
       {!searchQuery && documents.length > 0 && cursor && (

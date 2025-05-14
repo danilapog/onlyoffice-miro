@@ -12,8 +12,8 @@
 
 .searchbar-container__main {
   box-sizing: border-box;
-  position: relative;
   width: 100%;
+  position: relative;
   display: flex;
   align-items: center;
 
@@ -32,6 +32,7 @@
 .searchbar-container__main__icon {
   display: flex;
   align-items: center;
+
   flex-shrink: 0;
 
   margin-right: 8px;
@@ -39,8 +40,8 @@
 }
 
 .searchbar-container__main__input {
-  min-width: 0;
   width: 100%;
+  min-width: 0;
   flex: 1;
 
   font-size: 16px;

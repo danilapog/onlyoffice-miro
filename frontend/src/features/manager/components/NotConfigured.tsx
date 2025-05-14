@@ -1,13 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import '@features/file/components/notconfigured.css';
+import '@features/manager/components/notconfigured.css';
 
 interface NotConfiguredProps {}
 
 export const NotConfigured: React.FC<NotConfiguredProps> = () => {
   const { t } = useTranslation();
-  
   return (
     <div className="notconfigured-container">
       <img src="/notconfigured.svg" alt="Configuration Error" className="notconfigured-container__icon" />

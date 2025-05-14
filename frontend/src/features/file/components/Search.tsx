@@ -1,7 +1,8 @@
 import React, { forwardRef, useState, useEffect, ChangeEvent } from 'react';
+
 import { useFilesStore } from '@features/file/stores/useFileStore';
 
-import './search.css';
+import '@features/file/components/search.css';
 
 interface SearchbarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -10,7 +11,12 @@ export const Searchbar = forwardRef<HTMLDivElement, SearchbarProps>(({
   className,
   ...props
 }, ref) => {
-  const { searchQuery, setSearchQuery, loading, initialized } = useFilesStore();
+  const { 
+    searchQuery,
+    setSearchQuery,
+    initialized,
+    loading,
+  } = useFilesStore();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
   const disabled = loading && !initialized;

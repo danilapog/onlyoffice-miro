@@ -1,34 +1,40 @@
 import { create } from 'zustand';
-import { createFile as createMiroFile, fetchSupportedFileTypes, FileCreatedResponse } from '@features/manager/api/file';
 
-interface ManagerState {
+import { FileCreatedResponse } from '@features/manager/lib/types';
+
+import { createFile as createMiroFile, fetchSupportedFileTypes } from '@features/manager/api/file';
+
+interface CreatorState {
   selectedName: string;
   selectedType: string;
+
   loading: boolean;
   error: boolean;
 
+  getSupportedTypes: () => string[];
   setSelectedName: (value: string) => void;
   setSelectedType: (value: string) => void;
 
-  resetSelected: () => void;
   createFile: () => Promise<FileCreatedResponse | null>;
-  getSupportedTypes: () => string[];
+  resetSelected: () => void;
 }
 
-export const useManagerStore = create<ManagerState>((set, get) => ({
+export const useCreatorStore = create<CreatorState>((set, get) => ({
   selectedName: '',
   selectedType: '',
+
   loading: false,
   error: false,
 
+  getSupportedTypes(): string[] {
+    return fetchSupportedFileTypes();
+  },
   setSelectedName: (value) => set({ selectedName: value }),
   setSelectedType: (value) => set({ selectedType: value }),
 
-  resetSelected: () => {
-    set({ selectedName: '', selectedType: '' });
-  },
   createFile: async (): Promise<FileCreatedResponse | null> => {
     set({ loading: true, error: false });
+
     const { selectedName, selectedType } = get();
     if (!selectedName || !selectedType) return null;
 
@@ -42,8 +48,8 @@ export const useManagerStore = create<ManagerState>((set, get) => ({
     set({ loading: false });
     return createdFile;
   },
-  getSupportedTypes(): string[] {
-    return fetchSupportedFileTypes();
+  resetSelected: () => {
+    set({ selectedName: '', selectedType: '' });
   },
 }));
 

@@ -16,8 +16,9 @@
 }
 
 .empty-container__title {
-  margin-bottom: 0.5rem;
   max-width: 21rem;
+
+  margin-bottom: 0.5rem;
 
   font-weight: 700;
   font-size: 16px;
@@ -27,7 +28,7 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
 
-  color: #050038;
+  color: var(--main-text-color);
 }
 
 .empty-container__subtitle {
@@ -41,5 +42,5 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
 
-  color: #656B81;
+  color: var(--subtitle-text-color);
 }

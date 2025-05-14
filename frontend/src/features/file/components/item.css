@@ -20,20 +20,24 @@
 .file-container__icon {
   width: 1.5rem;
   height: 1.5rem;
+
   margin-right: 0.25rem;
 }
 
 .file-container__text_secondary {
-  color: var(--main-secondary-text-color);
   font-weight: 400;
+  
+  color: var(--main-secondary-text-color);
 }
 
 .file-container__title {
   width: 6.5rem;
   height: 1.938rem;
-  margin-right: 0.5rem;
-  line-height: 1.938rem;
   display: inline-block;
+
+  margin-right: 0.5rem;
+
+  line-height: 1.938rem;
 
   overflow: hidden;
   text-overflow: ellipsis;
@@ -42,8 +46,9 @@
 
 .file-container__date {
   max-width: 4rem;
-  margin-right: 1rem;
   display: inline-block;
+
+  margin-right: 1rem;
   
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,13 +56,14 @@
 }
 
 .file-container__dropdown-button {
-  padding: 0;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding: 0;
+  border-radius: 0.25rem;
 
   background: none;
   border: none;
@@ -84,7 +90,7 @@
 }
 
 .file-container__dropdown-button:hover .file-container__dropdown-button__icon {
-  background-color: #4262FF;
+  background-color: var(--main-button-color);
 }
 
 .file-container__dropdown-wrapper {
@@ -92,15 +98,16 @@
 }
 
 .file-container__dropdown-menu {
-  position: absolute;
   width: 15rem;
-  right: 0;
-  top: 100%;
   max-height: 80vh;
+  position: absolute;
+  top: 100%;
+  right: 0;
+
+  z-index: 1000;
   margin-top: 0.25rem;
   border-radius: 0.5rem;
 
-  z-index: 1000;
   overflow-y: auto;
 
   background-color: white;
@@ -112,6 +119,7 @@
 .file-container:nth-last-child(3) .file-container__dropdown-menu {
   bottom: 100%;
   top: auto;
+
   margin-top: 0;
   margin-bottom: 0.25rem;
 }
@@ -120,6 +128,7 @@
   .file-container:nth-last-child(n+1):nth-last-child(-n+5) .file-container__dropdown-menu {
     bottom: 100%;
     top: auto;
+
     margin-top: 0;
     margin-bottom: 0.25rem;
   }
@@ -142,8 +151,17 @@
   background-color: #F0F2FF;
 }
 
+.file-container__dropdown-menu__item:disabled {
+  cursor: not-allowed;
+  color: #A8A8A8;
+}
+
+.file-container__dropdown-menu__item:disabled:hover {
+  background-color: transparent;
+}
+
 .file-container__dropdown-menu__item_delete {
-  color: #E53935;
+  color: var(--main-error-color);
 }
 
 .file-container__dropdown-menu__item_delete:hover {

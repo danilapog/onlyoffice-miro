@@ -1,8 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
-import { Form } from '@features/settings/components/Form';
+
 import { Layout } from '@components/Layout';
+
+import { Form } from '@features/settings/components/Form';
+
+import { useSettingsStore } from '@features/settings/stores/useSettingsStore';
 
 import '@app/pages/settings/index.css';
 

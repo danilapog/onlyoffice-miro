@@ -15,4 +15,3 @@ export interface Pageable<D> {
   data: D[];
   cursor?: string;
 }
-
