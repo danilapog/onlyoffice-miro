@@ -57,6 +57,9 @@ type FileCreatedResponse struct {
 	ID         string `json:"id"`
 	CreatedAt  string `json:"createdAt"`
 	ModifiedAt string `json:"modifiedAt"`
+	Links      struct {
+		Self string `json:"self"`
+	} `json:"links"`
 }
 
 type FilesInfoResponse struct {
