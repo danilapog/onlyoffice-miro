@@ -178,6 +178,9 @@ export const useFilesStore = create<FilesState>((set, get) => ({
 
   deleteDocument: async (document: Document) => {
     await deleteDocument(document.id);
+    await miro.board.events.broadcast("document_deleted", {
+      id: document.id,
+    });
     set({ activeDropdown: null });
     await get().refreshDocuments();
   },

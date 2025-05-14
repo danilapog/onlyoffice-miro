@@ -61,7 +61,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
     const createdFile = await createFile();
     if (!createdFile) return;
 
-    miro.board.events.broadcast("document_created", {
+    await miro.board.events.broadcast("document_created", {
       id: createdFile.id,
       name: `${selectedName}.${selectedType}`,
       type: selectedType,
@@ -83,7 +83,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
       type: "document",
     };
     updateOnCreate([newDocument]);
-    
+
     resetSelected();
   }
 

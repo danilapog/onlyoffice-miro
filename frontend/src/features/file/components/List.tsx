@@ -8,7 +8,7 @@ import { ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/index';
 import { ItemsUpdateEvent } from '@mirohq/websdk-types';
 
 import '@features/file/components/list.css';
-import { FileCreatedEvent } from '@features/manager/api/file';
+import { FileCreatedEvent, FileDeletedEvent } from '@features/manager/api/file';
 
 interface FilesListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -38,10 +38,8 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
       updateOnCreate(docs as any);
   };
 
-  const listenDocumentRemoved = async (e: ItemsDeleteEvent) => {
-    const docs = e.items.filter(doc => doc.type === 'document');
-    if (docs.length > 0)
-      updateOnDelete(docs.map(doc => doc.id));
+  const listenDocumentRemoved = async (event: FileDeletedEvent) => {
+    updateOnDelete([event.id]);
   }
 
   const listenDocumentUpdated = async (e: ItemsUpdateEvent) => {
@@ -69,13 +67,13 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
       refreshDocuments();
 
     miroBoard.ui.on("items:create", listenDocumentAdded);
-    miroBoard.ui.on("items:delete", listenDocumentRemoved);
+    miroBoard.events.on("document_deleted", listenDocumentRemoved);
     miroBoard.ui.on("experimental:items:update", listenDocumentUpdated);
     miroBoard.events.on("document_created", listenDocumentCreated);
 
     return () => {
       miroBoard.ui.off("items:create", listenDocumentAdded);
-      miroBoard.ui.off("items:delete", listenDocumentRemoved);
+      miroBoard.events.off("document_deleted", listenDocumentRemoved);
       miroBoard.ui.off("experimental:items:update", listenDocumentUpdated);
       miroBoard.events.off("document_created", listenDocumentCreated);
     };
