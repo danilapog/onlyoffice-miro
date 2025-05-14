@@ -67,6 +67,7 @@
     "delete": "Delete"
   },
   "notifications": {
-    "documents_added": "Please refresh ONLYOFFICE to see new documents."
+    "documents_added": "Please refresh ONLYOFFICE to see new documents.",
+    "file_creation_failed": "Failed to create file"
   }
 } 

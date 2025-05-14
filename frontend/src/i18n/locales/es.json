@@ -67,6 +67,7 @@
     "delete": "Delete ES"
   },
   "notifications": {
-    "documents_added": "Please refresh ONLYOFFICE to see new documents ES"
+    "documents_added": "Please refresh ONLYOFFICE to see new documents ES",
+    "file_creation_failed": "Failed to create file ES"
   }
 } 

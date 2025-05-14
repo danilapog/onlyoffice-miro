@@ -59,7 +59,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
 
   const handleCreateFile = async () => {
     const createdFile = await createFile();
-    if (!createdFile) return;
+    if (!createdFile) return null;
 
     await miro.board.events.broadcast("document_created", {
       id: createdFile.id,
@@ -85,6 +85,8 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
     updateOnCreate([newDocument]);
 
     resetSelected();
+    
+    return createdFile;
   }
 
   return (
@@ -126,8 +128,11 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
           name={loading ? t('creation.creating') : t('creation.create')}
           variant='primary' 
           onClick={async () => {
-            await handleCreateFile();
-            navigate('/', { state: { isBack: true } });
+            const result = await handleCreateFile();
+            if (result)
+              navigate('/', { state: { isBack: true } });
+            else
+              await miro.board.notifications.showError(t('notifications.file_creation_failed'));
           }}
           disabled={loading || !formValid}
           style={{ 
