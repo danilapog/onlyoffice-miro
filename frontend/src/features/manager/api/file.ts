@@ -1,4 +1,18 @@
-export const createFile = async (name: string, type: string) => {
+export type FileCreatedResponse = {
+  id: string;
+  createdAt: string;
+  modifiedAt: string;
+  links: {
+    self: string;
+  };
+}
+
+export type FileCreatedEvent = {
+  name: string;
+  type: string;
+} & FileCreatedResponse;
+
+export const createFile = async (name: string, type: string): Promise<FileCreatedResponse | null> => {
   try {
     const { board: miroBoard } = window.miro;
     const userPromise = miroBoard.getUserInfo();
@@ -24,9 +38,9 @@ export const createFile = async (name: string, type: string) => {
     if (!response.ok)
       throw new Error('Failed to create a new document');
 
-    return true;
+    return (await response.json()).data;
   } catch {
-    return false;
+    return null;
   }
 };
 

@@ -32,7 +32,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
     getSupportedTypes,
   } = useManagerStore();
   const {
-    refreshDocuments
+    updateOnCreate
   } = useFilesStore();
   const [nameError, setNameError] = useState<string | undefined>(undefined);
 
@@ -58,9 +58,33 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(({
   const formValid = selectedName && selectedName.trim() !== '' && selectedType && !nameError;
 
   const handleCreateFile = async () => {
-    await createFile();
+    const createdFile = await createFile();
+    if (!createdFile) return;
+
+    miro.board.events.broadcast("document_created", {
+      id: createdFile.id,
+      name: `${selectedName}.${selectedType}`,
+      type: selectedType,
+      createdAt: createdFile.createdAt,
+      modifiedAt: createdFile.modifiedAt,
+      links: {
+        self: createdFile.links.self,
+      },
+    });
+
+    const newDocument = { 
+      id: createdFile.id, 
+      data: { 
+        title: `${selectedName}.${selectedType}`, 
+        documentUrl: createdFile.links.self 
+      }, 
+      createdAt: createdFile.createdAt, 
+      modifiedAt: createdFile.modifiedAt,
+      type: "document",
+    };
+    updateOnCreate([newDocument]);
+    
     resetSelected();
-    await refreshDocuments();
   }
 
   return (

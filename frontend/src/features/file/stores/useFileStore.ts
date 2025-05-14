@@ -22,6 +22,9 @@ interface FilesState {
   searchDocuments: () => void;
   loadMoreDocuments: () => Promise<void>;
   setObserverRef: (node: HTMLElement | null) => void;
+  updateOnCreate: (documents: Document[]) => void;
+  updateOnUpdate: (documents: Document[]) => void;
+  updateOnDelete: (documentIds: string[]) => void;
 }
 
 const filterDocuments = (documents: Document[], query: string): Document[] => {
@@ -188,5 +191,49 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     const { documents, searchQuery } = get();
     const filteredDocuments = filterDocuments(documents, searchQuery);
     set({ filteredDocuments });
+  },
+
+  updateOnCreate: (documents: Document[]) => {
+    set(state => {
+      const existing = new Set(state.documents.map(doc => doc.id));
+      const docs = documents.filter(doc => !existing.has(doc.id));
+      
+      if (docs.length === 0)
+        return state;
+      
+      const merged = [...state.documents, ...docs];
+      return {
+        documents: merged,
+        filteredDocuments: filterDocuments(merged, state.searchQuery),
+      };
+    });
+  },
+
+  updateOnUpdate: (documents: Document[]) => {
+    set(state => {
+      const docsMap = new Map(documents.map(doc => [doc.id, doc]));
+      const docs = [...state.documents];
+      docs.forEach(doc => {
+        const updatedDoc = docsMap.get(doc.id);
+        if (updatedDoc) {
+          doc.createdAt = updatedDoc.createdAt || doc.createdAt;
+          doc.modifiedAt = updatedDoc.modifiedAt || doc.modifiedAt;
+        }
+      });
+      return {
+        documents: docs,
+        filteredDocuments: filterDocuments(docs, state.searchQuery),
+      };
+    });
+  },
+
+  updateOnDelete: (documentIds: string[]) => {
+    set(state => {
+      const docs = state.documents.filter(doc => !documentIds.includes(doc.id));
+      return {
+        documents: docs,
+        filteredDocuments: filterDocuments(docs, state.searchQuery),
+      };
+    });
   }
 }));

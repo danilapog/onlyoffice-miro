@@ -5,8 +5,10 @@ import { Spinner } from '@components/Spinner';
 
 import { ItemsCreateEvent } from '@mirohq/websdk-types/stable/api/ui';
 import { ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/index';
+import { ItemsUpdateEvent } from '@mirohq/websdk-types';
 
 import '@features/file/components/list.css';
+import { FileCreatedEvent } from '@features/manager/api/file';
 
 interface FilesListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -23,28 +25,59 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     refreshDocuments,
     loading,
     cursor,
-    setObserverRef,
-    initialized
+    setObserverRef, 
+    initialized,
+    updateOnCreate,
+    updateOnDelete,
+    updateOnUpdate
   } = useFilesStore();
 
   const listenDocumentAdded = async (e: ItemsCreateEvent) => {
-    const doc = e.items.find(doc => doc.type === 'document');
-    if (doc) await refreshDocuments();
+    const docs = e.items.filter(doc => doc.type === 'document');
+    if (docs.length > 0)
+      updateOnCreate(docs as any);
   };
 
   const listenDocumentRemoved = async (e: ItemsDeleteEvent) => {
-    const doc = e.items.find(doc => doc.type === 'document');
-    if (doc) await refreshDocuments();
+    const docs = e.items.filter(doc => doc.type === 'document');
+    if (docs.length > 0)
+      updateOnDelete(docs.map(doc => doc.id));
+  }
+
+  const listenDocumentUpdated = async (e: ItemsUpdateEvent) => {
+    const docs = e.items.filter(doc => doc.type === 'document');
+    if (docs.length > 0)
+      updateOnUpdate(docs as any);
+  }
+
+  const listenDocumentCreated = async (event: FileCreatedEvent) => {
+    const newDocument = { 
+      id: event.id, 
+      data: { 
+        title: event.name, 
+        documentUrl: event.links.self 
+      }, 
+      createdAt: event.createdAt, 
+      modifiedAt: event.modifiedAt,
+      type: "document",
+    };
+    updateOnCreate([newDocument]);
   }
 
   useEffect(() => {
+    if (!initialized)
+      refreshDocuments();
+
     miroBoard.ui.on("items:create", listenDocumentAdded);
     miroBoard.ui.on("items:delete", listenDocumentRemoved);
-    refreshDocuments();
+    miroBoard.ui.on("experimental:items:update", listenDocumentUpdated);
+    miroBoard.events.on("document_created", listenDocumentCreated);
 
     return () => {
       miroBoard.ui.off("items:create", listenDocumentAdded);
       miroBoard.ui.off("items:delete", listenDocumentRemoved);
+      miroBoard.ui.off("experimental:items:update", listenDocumentUpdated);
+      miroBoard.events.off("document_created", listenDocumentCreated);
     };
   }, []);
 
