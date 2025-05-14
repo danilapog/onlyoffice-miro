@@ -1,14 +1,14 @@
 import React, { forwardRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ItemsCreateEvent } from '@mirohq/websdk-types/stable/api/ui';
+import { ItemsUpdateEvent } from '@mirohq/websdk-types';
+
 import { FileItem } from '@features/file/components/Item';
 import { useFilesStore } from '@features/file/stores/useFileStore';
 import { Spinner } from '@components/Spinner';
 
-import { ItemsCreateEvent } from '@mirohq/websdk-types/stable/api/ui';
-import { ItemsDeleteEvent } from '@mirohq/websdk-types/stable/api/index';
-import { ItemsUpdateEvent } from '@mirohq/websdk-types';
-
 import '@features/file/components/list.css';
-import { FileCreatedEvent, FileDeletedEvent } from '@features/manager/api/file';
+import { FileCreatedEvent, FileDeletedEvent, FilesAddedEvent } from '@features/manager/api/file';
 
 interface FilesListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
@@ -18,6 +18,7 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
   ...props
 }, ref) => {
   const { board: miroBoard } = window.miro;
+  const { t } = useTranslation();
   const {
     searchQuery,
     filteredDocuments,
@@ -32,10 +33,29 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     updateOnUpdate
   } = useFilesStore();
 
-  const listenDocumentAdded = async (e: ItemsCreateEvent) => {
-    const docs = e.items.filter(doc => doc.type === 'document');
-    if (docs.length > 0)
-      updateOnCreate(docs as any);
+  const listenDocumentAddedUI = async (e: ItemsCreateEvent) => {
+    const docs = e.items.filter(doc => doc.type === 'document').map(doc => {
+      const documentItem = doc as any;
+      return {
+        id: documentItem?.id,
+        data: {
+          title: documentItem?.name || '',
+          documentUrl: documentItem?.links?.self || '',
+        },
+        createdAt: documentItem?.createdAt,
+        modifiedAt: documentItem?.modifiedAt,
+        type: "document",
+      };
+    });
+
+    if (docs.length > 0) {
+      await miroBoard.events.broadcast("documents_added", { items: docs });
+      miroBoard.notifications.showInfo(t("notifications.documents_added"));
+    }
+  }
+
+  const listenDocumentsAdded = async (_: FilesAddedEvent) => {
+    miroBoard.notifications.showInfo(t("notifications.documents_added"));
   };
 
   const listenDocumentRemoved = async (event: FileDeletedEvent) => {
@@ -66,13 +86,15 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(({
     if (!initialized)
       refreshDocuments();
 
-    miroBoard.ui.on("items:create", listenDocumentAdded);
+    miroBoard.ui.on("items:create", listenDocumentAddedUI);
+    miroBoard.events.on("documents_added", listenDocumentsAdded);
     miroBoard.events.on("document_deleted", listenDocumentRemoved);
     miroBoard.ui.on("experimental:items:update", listenDocumentUpdated);
     miroBoard.events.on("document_created", listenDocumentCreated);
 
     return () => {
-      miroBoard.ui.off("items:create", listenDocumentAdded);
+      miroBoard.ui.off("items:create", listenDocumentAddedUI);
+      miroBoard.events.off("documents_added", listenDocumentsAdded);
       miroBoard.events.off("document_deleted", listenDocumentRemoved);
       miroBoard.ui.off("experimental:items:update", listenDocumentUpdated);
       miroBoard.events.off("document_created", listenDocumentCreated);

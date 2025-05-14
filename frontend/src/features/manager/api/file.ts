@@ -16,6 +16,10 @@ export type FileDeletedEvent = {
   id: string;
 };
 
+export type FilesAddedEvent = {
+  items: FileCreatedResponse[];
+};
+
 export const createFile = async (name: string, type: string): Promise<FileCreatedResponse | null> => {
   try {
     const { board: miroBoard } = window.miro;

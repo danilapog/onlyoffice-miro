@@ -65,5 +65,8 @@
     "navigate": "Navigate to",
     "download": "Download as PDF",
     "delete": "Delete"
+  },
+  "notifications": {
+    "documents_added": "Please refresh ONLYOFFICE to see new documents."
   }
 } 
