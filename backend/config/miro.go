@@ -16,7 +16,7 @@ type MiroConfig struct {
 func DefaultMiroConfig() *MiroConfig {
 	return &MiroConfig{
 		BaseURL: "https://api.miro.com/v2",
-		Timeout: 4 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 }
 

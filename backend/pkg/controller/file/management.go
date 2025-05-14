@@ -79,7 +79,7 @@ func (c *fileManagementController) handleGet(ctx echo.Context) error {
 }
 
 func (c *fileManagementController) handlePost(ctx echo.Context) error {
-	return c.ExecuteWithTimeout(ctx, 4*time.Second, func(tctx context.Context) error {
+	return c.ExecuteWithTimeout(ctx, 15*time.Second, func(tctx context.Context) error {
 		var body createBody
 		if err := json.NewDecoder(ctx.Request().Body).Decode(&body); err != nil {
 			return c.HandleError(ctx, err, http.StatusBadRequest, "failed to decode request body")

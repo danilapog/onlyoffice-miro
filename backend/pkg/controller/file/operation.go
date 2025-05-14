@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
@@ -62,10 +63,10 @@ func CreateFile(
 	tctx context.Context,
 	c *base.BaseController,
 	req miro.CreateFileRequest,
-) (*miro.FileLocationResponse, error) {
+) (*miro.FileCreatedResponse, error) {
 	response, err := c.MiroClient.CreateFile(tctx, req)
 	if err != nil {
-		return nil, c.HandleError(ctx, err, http.StatusInternalServerError, "failed to create a file")
+		return nil, fmt.Errorf("failed to create a file: %w", err)
 	}
 
 	return response, nil

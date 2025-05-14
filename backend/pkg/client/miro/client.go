@@ -225,7 +225,7 @@ func (c *client) createMultipartForm(data map[string]any, filePath string) (*byt
 	return body, writer.FormDataContentType(), nil
 }
 
-func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileLocationResponse, error) {
+func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileCreatedResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileLo
 		"Content-Type": contentType,
 	}
 
-	var response FileLocationResponse
+	var response FileCreatedResponse
 	if err := c.sendRequest(ctx, http.MethodPost, url, req.Token, body, headers, &response); err != nil {
 		return nil, err
 	}

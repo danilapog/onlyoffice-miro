@@ -53,6 +53,12 @@ type FileLocationResponse struct {
 	URL string `json:"url"`
 }
 
+type FileCreatedResponse struct {
+	ID         string `json:"id"`
+	CreatedAt  string `json:"createdAt"`
+	ModifiedAt string `json:"modifiedAt"`
+}
+
 type FilesInfoResponse struct {
 	Size   int                `json:"size"`
 	Limit  int                `json:"limit"`

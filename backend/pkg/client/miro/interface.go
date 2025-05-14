@@ -8,5 +8,5 @@ type Client interface {
 	GetFilePublicURL(ctx context.Context, req GetFilePublicURLRequest) (*FileLocationResponse, error)
 	GetBoardMember(ctx context.Context, req GetBoardMemberRequest) (*BoardMemberResponse, error)
 	UploadFile(ctx context.Context, req UploadFileRequest) (*FileLocationResponse, error)
-	CreateFile(ctx context.Context, req CreateFileRequest) (*FileLocationResponse, error)
+	CreateFile(ctx context.Context, req CreateFileRequest) (*FileCreatedResponse, error)
 }
