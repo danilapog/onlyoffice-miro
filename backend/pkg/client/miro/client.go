@@ -111,7 +111,7 @@ func (c *client) GetFilesInfo(ctx context.Context, req GetFilesInfoRequest) (*Fi
 	}
 
 	var response FilesInfoResponse
-	url := c.buildURL("boards", req.BoardID, "items?type=document")
+	url := c.buildURL("boards", req.BoardID, "items?type=document&limit=50")
 	if req.Cursor != "" {
 		var sb strings.Builder
 		sb.WriteString(url)
