@@ -8,6 +8,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/labstack/echo/v4 v4.13.3
+	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/redis/go-redis/v9 v9.7.3
 	go.uber.org/fx v1.23.0
 	go.uber.org/zap v1.27.0

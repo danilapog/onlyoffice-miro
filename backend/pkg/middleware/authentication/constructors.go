@@ -12,6 +12,7 @@ import (
 func NewHeaderAuthMiddleware(
 	config *config.Config,
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 	headerName string,
 ) *AuthMiddleware {
@@ -20,6 +21,7 @@ func NewHeaderAuthMiddleware(
 		jwtService,
 		HeaderTokenExtractor(headerName),
 		NoOpRefresher(),
+		translator,
 		logger,
 	)
 }
@@ -27,6 +29,7 @@ func NewHeaderAuthMiddleware(
 func NewMiroAuthMiddleware(
 	config *config.Config,
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
 	middleware := NewAuthMiddleware(
@@ -34,6 +37,7 @@ func NewMiroAuthMiddleware(
 		jwtService,
 		MiroSignatureExtractor(),
 		NoOpRefresher(),
+		translator,
 		logger,
 	)
 
@@ -63,6 +67,7 @@ func NewCookieOAuthMiddleware(
 	config *config.Config,
 	oauthService oauth.OAuthService[miro.AuthenticationResponse],
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
 	middleware := NewAuthMiddleware(
@@ -70,6 +75,7 @@ func NewCookieOAuthMiddleware(
 		jwtService,
 		CookieTokenExtractor(config.Cookie.Name),
 		nil,
+		translator,
 		logger,
 	)
 
@@ -80,25 +86,28 @@ func NewCookieOAuthMiddleware(
 func NewTokenAuthMiddleware(
 	config *config.Config,
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
-	return NewHeaderAuthMiddleware(config, jwtService, logger, miroSignature)
+	return NewHeaderAuthMiddleware(config, jwtService, translator, logger, miroSignature)
 }
 
 func NewCookieAuthMiddleware(
 	config *config.Config,
 	oauthService oauth.OAuthService[miro.AuthenticationResponse],
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
-	return NewCookieOAuthMiddleware(config, oauthService, jwtService, logger)
+	return NewCookieOAuthMiddleware(config, oauthService, jwtService, translator, logger)
 }
 
 func NewEditorAuthMiddleware(
 	config *config.Config,
 	oauthService oauth.OAuthService[miro.AuthenticationResponse],
 	jwtService crypto.Signer,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
-	return NewCookieOAuthMiddleware(config, oauthService, jwtService, logger)
+	return NewCookieOAuthMiddleware(config, oauthService, jwtService, translator, logger)
 }

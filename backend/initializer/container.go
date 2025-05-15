@@ -57,6 +57,7 @@ type Services struct {
 	JwtService      crypto.Signer
 	Renderer        *controller.TemplateRenderer
 	SettingsService settingsService.SettingsService
+	Translator      service.TranslationProvider
 }
 
 // Controllers contains all HTTP request handlers.

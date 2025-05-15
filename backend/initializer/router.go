@@ -92,12 +92,14 @@ func setupAuthMiddleware(r *Router, logger service.Logger) (
 	authMiddleware := authentication.NewTokenAuthMiddleware(
 		r.Config,
 		r.Services.JwtService,
+		r.Services.Translator,
 		logger,
 	)
 
 	miroAuthMiddleware := authentication.NewMiroAuthMiddleware(
 		r.Config,
 		r.Services.JwtService,
+		r.Services.Translator,
 		logger,
 	)
 
@@ -105,6 +107,7 @@ func setupAuthMiddleware(r *Router, logger service.Logger) (
 		r.Config,
 		r.Services.AuthService,
 		r.Services.JwtService,
+		r.Services.Translator,
 		logger,
 	)
 

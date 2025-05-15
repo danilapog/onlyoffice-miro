@@ -30,6 +30,7 @@ type AuthMiddleware struct {
 	jwtService crypto.Signer
 	extractor  TokenExtractor
 	refresher  TokenRefresher
+	translator service.TranslationProvider
 	logger     service.Logger
 }
 
@@ -38,6 +39,7 @@ func NewAuthMiddleware(
 	jwtService crypto.Signer,
 	extractor TokenExtractor,
 	refresher TokenRefresher,
+	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
 	return &AuthMiddleware{
@@ -45,6 +47,7 @@ func NewAuthMiddleware(
 		jwtService: jwtService,
 		extractor:  extractor,
 		refresher:  refresher,
+		translator: translator,
 		logger:     logger,
 	}
 }
@@ -60,7 +63,7 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return c.Render(http.StatusOK, "unauthorized", map[string]string{
 				"language":           lang,
-				"authorizationError": "Missing authentication",
+				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
 			})
 		}
 
@@ -73,7 +76,7 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return c.Render(http.StatusOK, "unauthorized", map[string]string{
 				"language":           lang,
-				"authorizationError": "Missing authentication",
+				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
 			})
 		}
 
@@ -81,7 +84,7 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			if err := m.refresher(c, token); err != nil {
 				return c.Render(http.StatusOK, "unauthorized", map[string]string{
 					"language":           lang,
-					"authorizationError": "Missing authentication",
+					"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
 				})
 			}
 		}
@@ -191,7 +194,7 @@ func (m *AuthMiddleware) GetCookieExpiration(c echo.Context) error {
 	if err != nil {
 		return c.Render(http.StatusOK, "unauthorized", map[string]string{
 			"language":           lang,
-			"authorizationError": "Missing authentication",
+			"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
 		})
 	}
 

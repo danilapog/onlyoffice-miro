@@ -25,6 +25,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/processor"
 	settingsService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/storage/pg"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/translation"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"
 )
@@ -190,6 +191,11 @@ func NewServices(
 		logger,
 	)
 
+	translator, err := translation.NewTranslation("en")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Services{
 		AuthService:     authService,
 		SettingsService: settingsService,
@@ -197,6 +203,7 @@ func NewServices(
 		Builder:         builder,
 		FormatManager:   formatManager,
 		Renderer:        &renderer,
+		Translator:      translator,
 	}, nil
 }
 
