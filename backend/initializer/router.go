@@ -2,7 +2,10 @@ package initializer
 
 import (
 	"log"
+	"net/http"
+	"strings"
 
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/assets"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/middleware"
@@ -29,6 +32,7 @@ func (r *Router) SetupRoutes(
 	setupAuthRoutes(r, controllers)
 	setupProtectedRoutes(r, controllers, authMiddleware)
 	setupMiroAuthRoutes(r, miroAuthMiddleware)
+	setupFileStoreRoutes(r)
 }
 
 // setupGlobalMiddleware configures global middleware for all routes
@@ -148,4 +152,22 @@ func setupProtectedRoutes(r *Router, controllers *Controllers, authMiddleware *a
 // setupMiroAuthRoutes configures Miro-specific authentication routes
 func setupMiroAuthRoutes(r *Router, miroAuthMiddleware *authentication.AuthMiddleware) {
 	r.Echo.GET("/api/authorize", miroAuthMiddleware.Authenticate(miroAuthMiddleware.GetCookieExpiration))
+}
+
+// setupFileStoreRoutes configures file store routes to serve embedded assets
+func setupFileStoreRoutes(r *Router) {
+	r.Echo.GET("/filestore/*", func(c echo.Context) error {
+		reqPath := c.Param("*")
+		if strings.HasPrefix(reqPath, "icons/") {
+			fileData, err := assets.Icons.ReadFile(reqPath)
+			if err != nil {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			contentType := http.DetectContentType(fileData)
+			return c.Blob(http.StatusOK, contentType, fileData)
+		}
+
+		return c.NoContent(http.StatusNotFound)
+	})
 }
