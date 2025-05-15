@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 import { Document } from '@features/file/lib/types';
 
+import { generateRandomString } from '@utils/random';
+
 import {
   convertDocument,
   deleteDocument,
@@ -179,7 +181,7 @@ export const useFilesStore = create<FilesState>((set, get) => ({
       set({ converting: true });
       const response = await convertDocument(document.id);
       const { url, token } = response;
-      const cresponse = await fetch(`${url}/converter`, {
+      const cresponse = await fetch(`${url}/converter?shardKey=${generateRandomString(8)}`, {
         method: 'POST',
         body: JSON.stringify({
           token,

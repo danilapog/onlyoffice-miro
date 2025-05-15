@@ -115,6 +115,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(({
                 e.stopPropagation();
                 deleteDocument(fileDocument);
               }}
+              disabled={converting}
             >
               {t('file.delete')}
             </button>
