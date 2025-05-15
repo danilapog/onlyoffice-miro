@@ -27,6 +27,7 @@ export const Installation = () => {
         variant='primary' 
         onClick={() => {
           window.open(import.meta.env.VITE_MIRO_INSTALLATION_URL, '_blank');
+          window.miro?.board.ui.closePanel();
         }}
         className="installation-container__button"
         title={t('manager.installation_error_button', { fallback: 'Install' })}
