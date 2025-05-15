@@ -9,6 +9,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/deployments"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/docserver"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/controller"
@@ -43,7 +44,7 @@ var Module = fx.Options(
 		NewCache,    // Caching service
 
 		// External clients layer
-		NewClients, // External API client services (Miro, OAuth)
+		NewClients, // External API client services (Miro, OAuth, DocServer)
 
 		// Application services layer - business logic
 		NewServices, // Core application services
@@ -135,6 +136,7 @@ func NewClients(config *config.Config) (*Clients, error) {
 	return &Clients{
 		OAuthClient: oauthClient,
 		MiroClient:  miro.NewMiroClient(config.Miro),
+		DocServer:   docserver.NewClient(),
 	}, nil
 }
 
@@ -179,9 +181,12 @@ func NewServices(
 	)
 
 	settingsService := settingsService.NewSettingsService(
+		config,
 		cipher,
+		jwt,
 		database.SettingsStorage,
 		cache,
+		clients.DocServer,
 		logger,
 	)
 

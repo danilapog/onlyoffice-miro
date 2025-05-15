@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
@@ -12,29 +14,40 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core/component"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/docserver"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/storage/pg"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const defaultCacheExpiration = 5 * time.Minute
 
 type settingsService struct {
-	cipher         crypto.Cipher
-	storageService service.Storage[core.SettingsCompositeKey, component.Settings]
-	cache          service.Cache
-	logger         service.Logger
+	config          *config.Config
+	cipher          crypto.Cipher
+	jwtService      crypto.Signer
+	storageService  service.Storage[core.SettingsCompositeKey, component.Settings]
+	cache           service.Cache
+	docServerClient docserver.Client
+	logger          service.Logger
 }
 
 func NewSettingsService(
+	config *config.Config,
 	cipher crypto.Cipher,
+	jwtService crypto.Signer,
 	storageService service.Storage[core.SettingsCompositeKey, component.Settings],
 	cache service.Cache,
+	docServerClient docserver.Client,
 	logger service.Logger,
 ) SettingsService {
 	return &settingsService{
-		cipher:         cipher,
-		storageService: storageService,
-		cache:          cache,
-		logger:         logger,
+		config:          config,
+		cipher:          cipher,
+		jwtService:      jwtService,
+		storageService:  storageService,
+		cache:           cache,
+		docServerClient: docServerClient,
+		logger:          logger,
 	}
 }
 
@@ -121,6 +134,29 @@ func (s *settingsService) cacheSettings(ctx context.Context, teamID, boardID str
 	}
 }
 
+func validateDocServerVersion(version string) error {
+	parts := strings.Split(version, ".")
+	if len(parts) < 2 {
+		return fmt.Errorf("invalid docserver version format: %s", version)
+	}
+
+	major, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return fmt.Errorf("invalid docserver major version: %s", version)
+	}
+
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return fmt.Errorf("invalid docserver minor version: %s", version)
+	}
+
+	if major < 8 || (major == 8 && minor < 2) {
+		return fmt.Errorf("docserver version is not supported: %s. Required version 8.2 or newer", version)
+	}
+
+	return nil
+}
+
 func (s *settingsService) Save(ctx context.Context, teamID, boardID string, opts ...Option) error {
 	settings := &SaveOptions{}
 	for _, opt := range opts {
@@ -135,6 +171,31 @@ func (s *settingsService) Save(ctx context.Context, teamID, boardID string, opts
 	existingSettings, err := s.storageService.Find(ctx, compositeKey)
 	if err != nil && !errors.Is(err, pg.ErrNoRowsAffected) {
 		return err
+	}
+
+	if settings.Address != "" && settings.Header != "" && settings.Secret != "" {
+		token, err := s.jwtService.Create(jwt.MapClaims{
+			"c":   "version",
+			"exp": jwt.NewNumericDate(time.Now().Add(time.Minute * 1)),
+			"iat": jwt.NewNumericDate(time.Now()),
+		}, []byte(settings.Secret))
+
+		if err != nil {
+			return err
+		}
+
+		response, err := s.docServerClient.GetServerVersion(ctx, settings.Address, docserver.WithHeader(settings.Header), docserver.WithToken(token))
+		if err != nil {
+			return err
+		}
+
+		if response.Error != 0 {
+			return fmt.Errorf("received non-zero error code from docserver: %d", response.Error)
+		}
+
+		if err := validateDocServerVersion(response.Version); err != nil {
+			return err
+		}
 	}
 
 	newSettings, err := s.buildNewSettings(teamID, settings, existingSettings)

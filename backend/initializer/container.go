@@ -6,6 +6,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core/component"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/docserver"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
@@ -45,6 +46,7 @@ type Database struct {
 type Clients struct {
 	OAuthClient oauth.OAuthClient[miro.AuthenticationResponse]
 	MiroClient  miro.Client
+	DocServer   docserver.Client
 }
 
 // Services contains all application service instances.
