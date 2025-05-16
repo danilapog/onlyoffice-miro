@@ -17,8 +17,8 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/sync/errgroup"
+	echo "github.com/labstack/echo/v4"
+	errgroup "golang.org/x/sync/errgroup"
 )
 
 type BaseController struct {

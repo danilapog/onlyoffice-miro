@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
-	"github.com/golang-migrate/migrate/v4"
+	migrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/jackc/pgx/v5/pgxpool"
+	iofs "github.com/golang-migrate/migrate/v4/source/iofs"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
 )
 
 //go:embed migrations/*.sql

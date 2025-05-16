@@ -26,8 +26,8 @@ import (
 	settingsService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/storage/pg"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/translation"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/fx"
+	echo "github.com/labstack/echo/v4"
+	fx "go.uber.org/fx"
 )
 
 // Module defines the application dependency graph using fx.

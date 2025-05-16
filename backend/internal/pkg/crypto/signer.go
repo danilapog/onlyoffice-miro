@@ -1,6 +1,6 @@
 package crypto
 
-import "github.com/golang-jwt/jwt/v5"
+import jwt "github.com/golang-jwt/jwt/v5"
 
 type Signer interface {
 	Validate(tokenString string, secret []byte) (*jwt.Token, error)

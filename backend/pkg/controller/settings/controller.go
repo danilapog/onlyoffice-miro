@@ -14,7 +14,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/middleware/authentication"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 type settingsController struct {

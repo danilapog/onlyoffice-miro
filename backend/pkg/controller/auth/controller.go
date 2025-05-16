@@ -13,7 +13,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 type authController struct {

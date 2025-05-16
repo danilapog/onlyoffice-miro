@@ -17,12 +17,12 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
+	echo "github.com/labstack/echo/v4"
 )
 
 type fileConversionController struct {
-	*base.BaseController
+	base.BaseController
 }
 
 func NewFileConversionController(
@@ -36,7 +36,7 @@ func NewFileConversionController(
 	logger service.Logger,
 ) common.Handler {
 	controller := &fileConversionController{
-		BaseController: base.NewBaseController(
+		BaseController: *base.NewBaseController(
 			config,
 			miroClient,
 			jwtService,
@@ -54,50 +54,50 @@ func NewFileConversionController(
 }
 
 func (c *fileConversionController) handleGet(ctx echo.Context) error {
-	return c.ExecuteWithTimeout(ctx, 2*time.Second, func(tctx context.Context) error {
-		boardAuth, err := PrepareRequest(ctx, tctx, c.BaseController)
+	return c.BaseController.ExecuteWithTimeout(ctx, 2*time.Second, func(tctx context.Context) error {
+		boardAuth, err := PrepareRequest(ctx, tctx, &c.BaseController)
 		if err != nil {
 			return err
 		}
 
 		if boardAuth == nil {
-			return c.HandleError(ctx, ErrInvalidBoardAuthentication, http.StatusInternalServerError, ErrInvalidBoardAuthentication.Error())
+			return c.BaseController.HandleError(ctx, ErrInvalidBoardAuthentication, http.StatusInternalServerError, ErrInvalidBoardAuthentication.Error())
 		}
 
 		if boardAuth.Authentication == nil {
-			return c.HandleError(ctx, ErrMissingAuthenticationData, http.StatusInternalServerError, ErrMissingAuthenticationData.Error())
+			return c.BaseController.HandleError(ctx, ErrMissingAuthenticationData, http.StatusInternalServerError, ErrMissingAuthenticationData.Error())
 		}
 
-		if fid, ferr := c.GetQueryParam(ctx, "fid"); ferr == nil {
-			file, err := GetFileInfo(ctx, tctx, c.BaseController, boardAuth.BoardID, fid, boardAuth.Authentication.AccessToken)
+		if fid, ferr := c.BaseController.GetQueryParam(ctx, "fid"); ferr == nil {
+			file, err := GetFileInfo(ctx, tctx, &c.BaseController, boardAuth.BoardID, fid, boardAuth.Authentication.AccessToken)
 			if err != nil {
 				return err
 			}
 
-			location, err := c.MiroClient.GetFilePublicURL(tctx, miro.GetFilePublicURLRequest{
+			location, err := c.BaseController.MiroClient.GetFilePublicURL(tctx, miro.GetFilePublicURLRequest{
 				URL:   file.Data.DocumentURL,
 				Token: boardAuth.Authentication.AccessToken,
 			})
 
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusInternalServerError, ErrFailedToFetchMiroFile.Error())
+				return c.BaseController.HandleError(ctx, err, http.StatusInternalServerError, ErrFailedToFetchMiroFile.Error())
 			}
 
-			token, err := c.ExtractUserToken(ctx)
+			token, err := c.BaseController.ExtractUserToken(ctx)
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusForbidden, ErrFailedToExtractToken.Error())
+				return c.BaseController.HandleError(ctx, err, http.StatusForbidden, ErrFailedToExtractToken.Error())
 			}
 
-			settings, err := c.SettingsService.Find(tctx, token.Team, boardAuth.BoardID)
+			settings, err := c.BaseController.SettingsService.Find(tctx, token.Team, boardAuth.BoardID)
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusBadRequest, ErrFailedToFetchSettings.Error())
+				return c.BaseController.HandleError(ctx, err, http.StatusBadRequest, ErrFailedToFetchSettings.Error())
 			}
 
 			address := settings.Address
 			secret := settings.Secret
-			if settings.Demo.Enabled && settings.Demo.Started.Add(time.Duration(c.Config.DemoServer.Days)*24*time.Hour).After(time.Now()) && (address == "" || secret == "") {
-				address = c.Config.DemoServer.Address
-				secret = c.Config.DemoServer.Secret
+			if settings.Demo.Enabled && settings.Demo.Started.Add(time.Duration(c.BaseController.Config.DemoServer.Days)*24*time.Hour).After(time.Now()) && (address == "" || secret == "") {
+				address = c.BaseController.Config.DemoServer.Address
+				secret = c.BaseController.Config.DemoServer.Secret
 			}
 
 			fileExt := path.Ext(file.Data.Title)
@@ -114,9 +114,9 @@ func (c *fileConversionController) handleGet(ctx echo.Context) error {
 				},
 			}
 
-			jwtToken, err := c.JwtService.Create(convReq, []byte(secret))
+			jwtToken, err := c.BaseController.JwtService.Create(convReq, []byte(secret))
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusBadRequest, "failed to create token")
+				return c.BaseController.HandleError(ctx, err, http.StatusBadRequest, "failed to create token")
 			}
 
 			return ctx.JSON(200, convertResponse{

@@ -14,6 +14,7 @@ config.yaml
 
 # Temporary directories
 tmp
+.golangci.tmp
 
 # Logs
 logs

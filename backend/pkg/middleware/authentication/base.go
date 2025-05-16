@@ -9,8 +9,8 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
+	echo "github.com/labstack/echo/v4"
 )
 
 type TokenClaims struct {
@@ -207,6 +207,6 @@ func (m *AuthMiddleware) GetCookieExpiration(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"expires_at": token.ExpiresAt.Unix(),
+		"expires_at": token.RegisteredClaims.ExpiresAt.Unix(),
 	})
 }

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	pgx "github.com/jackc/pgx/v5"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
 )
 
 func generateStatementName(query string) string {

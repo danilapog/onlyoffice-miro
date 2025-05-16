@@ -10,7 +10,7 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/initializer"
-	"go.uber.org/fx"
+	fx "go.uber.org/fx"
 )
 
 func main() {

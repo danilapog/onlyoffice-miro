@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"io"
 
-	"golang.org/x/crypto/pbkdf2"
+	pbkdf2 "golang.org/x/crypto/pbkdf2"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/text/language"
+	language "golang.org/x/text/language"
 )
 
 func Concat(strs ...string) string { return strings.Join(strs, "") }

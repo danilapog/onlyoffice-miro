@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
+	validator "github.com/go-playground/validator/v10"
 )
 
 type RateLimitConfig struct {

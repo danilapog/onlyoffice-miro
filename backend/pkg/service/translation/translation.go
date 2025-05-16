@@ -8,8 +8,8 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/assets"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"golang.org/x/text/language"
+	i18n "github.com/nicksnyder/go-i18n/v2/i18n"
+	language "golang.org/x/text/language"
 )
 
 type Translation struct {

@@ -16,7 +16,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/docserver"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/storage/pg"
-	"github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 const defaultCacheExpiration = 5 * time.Minute

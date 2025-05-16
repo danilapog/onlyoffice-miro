@@ -2,7 +2,7 @@ package initializer
 
 import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
-	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core"
+	core "github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core/component"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/crypto"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
@@ -14,9 +14,11 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	settingsService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
+	echo "github.com/labstack/echo/v4"
 )
+
+var _ core.AuthCompositeKey
 
 // App is the main application container that holds all dependencies.
 type App struct {

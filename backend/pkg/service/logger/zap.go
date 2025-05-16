@@ -6,8 +6,8 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	zap "go.uber.org/zap"
+	zapcore "go.uber.org/zap/zapcore"
 )
 
 type zapLevelMap map[config.Level]zapcore.Level

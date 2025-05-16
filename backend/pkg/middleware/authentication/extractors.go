@@ -7,7 +7,7 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 func HeaderTokenExtractor(headerName string) TokenExtractor {
@@ -49,7 +49,7 @@ func NoOpRefresher() TokenRefresher {
 
 func MiroOAuthTokenRefresher(middleware *AuthMiddleware, oauthService oauth.OAuthService[miro.AuthenticationResponse]) TokenRefresher {
 	return func(c echo.Context, token *TokenClaims) error {
-		if token.ExpiresAt.Before(time.Now()) || time.Until(token.ExpiresAt.Time) < time.Hour {
+		if token.RegisteredClaims.ExpiresAt.Before(time.Now()) || time.Until(token.RegisteredClaims.ExpiresAt.Time) < time.Hour {
 			_, err := oauthService.Find(c.Request().Context(), token.Team, token.User)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to refresh token")

@@ -6,7 +6,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/client/miro"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 func NewHeaderAuthMiddleware(
@@ -52,7 +52,7 @@ func NewMiroAuthMiddleware(
 			return "", err
 		}
 
-		if err := middleware.SetAuthCookie(c, token.User, token.Team, int(token.ExpiresAt.Unix())); err != nil {
+		if err := middleware.SetAuthCookie(c, token.User, token.Team, int(token.RegisteredClaims.ExpiresAt.Unix())); err != nil {
 			return "", err
 		}
 

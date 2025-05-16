@@ -15,8 +15,8 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/sync/errgroup"
+	echo "github.com/labstack/echo/v4"
+	errgroup "golang.org/x/sync/errgroup"
 )
 
 type callbackController struct {
@@ -44,6 +44,8 @@ func NewCallbackController(
 		settingsService: settingsService,
 		logger:          logger,
 	}
+
+	logger.Info(context.Background(), "Callback controller initialized")
 
 	return common.NewHandler(map[common.HTTPMethod]echo.HandlerFunc{
 		common.MethodPost: controller.handlePost,

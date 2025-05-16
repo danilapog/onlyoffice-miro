@@ -17,12 +17,12 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/sync/errgroup"
+	echo "github.com/labstack/echo/v4"
+	errgroup "golang.org/x/sync/errgroup"
 )
 
 type editorController struct {
-	*base.BaseController
+	base.BaseController
 }
 
 func NewEditorController(
@@ -36,7 +36,7 @@ func NewEditorController(
 	logger service.Logger,
 ) common.Handler {
 	controller := &editorController{
-		BaseController: base.NewBaseController(
+		BaseController: *base.NewBaseController(
 			config,
 			miroClient,
 			jwtService,
@@ -58,22 +58,22 @@ func buildCallbackURL(base, fid, uid, tid, bid string) string {
 }
 
 func (c *editorController) extractAndValidateParams(ctx echo.Context) (editorRequestParams, error) {
-	token, err := c.ExtractUserToken(ctx)
+	token, err := c.BaseController.ExtractUserToken(ctx)
 	if err != nil {
 		return editorRequestParams{}, err
 	}
 
-	bid, err := c.GetQueryParam(ctx, "bid")
+	bid, err := c.BaseController.GetQueryParam(ctx, "bid")
 	if err != nil {
 		return editorRequestParams{}, err
 	}
 
-	fid, err := c.GetQueryParam(ctx, "fid")
+	fid, err := c.BaseController.GetQueryParam(ctx, "fid")
 	if err != nil {
 		return editorRequestParams{}, err
 	}
 
-	lang, err := c.GetQueryParam(ctx, "lang")
+	lang, err := c.BaseController.GetQueryParam(ctx, "lang")
 	if err != nil {
 		lang = "en"
 	}
@@ -88,7 +88,7 @@ func (c *editorController) fetchMiroData(ctx context.Context, params editorReque
 
 	g.Go(func() error {
 		var err error
-		userInfo, err = c.MiroClient.GetBoardMember(ctx, miro.GetBoardMemberRequest{
+		userInfo, err = c.BaseController.MiroClient.GetBoardMember(ctx, miro.GetBoardMemberRequest{
 			BoardID:  params.bid,
 			MemberID: params.uid,
 			Token:    accessToken,
@@ -102,7 +102,7 @@ func (c *editorController) fetchMiroData(ctx context.Context, params editorReque
 
 	g.Go(func() error {
 		var err error
-		fileInfo, err = c.MiroClient.GetFileInfo(ctx, miro.GetFileInfoRequest{
+		fileInfo, err = c.BaseController.MiroClient.GetFileInfo(ctx, miro.GetFileInfoRequest{
 			BoardID: params.bid,
 			ItemID:  params.fid,
 			Token:   accessToken,
@@ -118,7 +118,7 @@ func (c *editorController) fetchMiroData(ctx context.Context, params editorReque
 		return nil, nil, err
 	}
 
-	publicFile, err := c.MiroClient.GetFilePublicURL(ctx, miro.GetFilePublicURLRequest{
+	publicFile, err := c.BaseController.MiroClient.GetFilePublicURL(ctx, miro.GetFilePublicURLRequest{
 		URL:   fileInfo.Data.DocumentURL,
 		Token: accessToken,
 	})
@@ -137,10 +137,10 @@ func (c *editorController) resolveServerSettings(settings *component.Settings) (
 
 	if settings.Demo.Enabled && address == "" && secret == "" {
 		if settings.Demo.Started != nil {
-			demoExpiry := settings.Demo.Started.Add(time.Duration(c.Config.DemoServer.Days) * 24 * time.Hour)
+			demoExpiry := settings.Demo.Started.Add(time.Duration(c.BaseController.Config.DemoServer.Days) * 24 * time.Hour)
 			if demoExpiry.After(time.Now()) {
-				address = c.Config.DemoServer.Address
-				secret = c.Config.DemoServer.Secret
+				address = c.BaseController.Config.DemoServer.Address
+				secret = c.BaseController.Config.DemoServer.Secret
 			}
 		}
 	}
@@ -160,7 +160,7 @@ func (c *editorController) buildEditorConfig(
 	file *miro.FileInfoResponse,
 	secret string,
 ) (*document.Config, error) {
-	config, err := c.BuilderService.Build(
+	config, err := c.BaseController.BuilderService.Build(
 		ctx,
 		callbackURL,
 		builderRequest{Board: boardID, File: *file},
@@ -176,7 +176,7 @@ func (c *editorController) buildEditorConfig(
 }
 
 func (c *editorController) handleGet(ctx echo.Context) error {
-	return c.ExecuteWithTimeout(ctx, 3*time.Second, func(tctx context.Context) error {
+	return c.BaseController.ExecuteWithTimeout(ctx, 3*time.Second, func(tctx context.Context) error {
 		handleRequestError := func(err error, message string) error {
 			if err != nil {
 				return ctx.Render(http.StatusOK, "unauthorized", map[string]string{
@@ -188,34 +188,34 @@ func (c *editorController) handleGet(ctx echo.Context) error {
 		}
 
 		params, err := c.extractAndValidateParams(ctx)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, "en", "editor.errors.unauthorized")); err != nil {
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, "en", "editor.errors.unauthorized")); err != nil {
 			return err
 		}
 
-		settings, auth, err := c.FetchAuthenticationWithSettings(tctx, params.uid, params.tid, params.bid)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_required_data")); err != nil {
+		settings, auth, err := c.BaseController.FetchAuthenticationWithSettings(tctx, params.uid, params.tid, params.bid)
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_required_data")); err != nil {
 			return err
 		}
 
 		address, secret, err := c.resolveServerSettings(settings)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.invalid_configuration")); err != nil {
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, params.lang, "editor.errors.invalid_configuration")); err != nil {
 			return err
 		}
 
 		user, file, err := c.fetchMiroData(tctx, params, auth.AccessToken)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_miro_data")); err != nil {
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_miro_data")); err != nil {
 			return err
 		}
 
 		user.Lang = params.lang
-		callbackURL := buildCallbackURL(c.Config.Server.CallbackURL, params.fid, params.uid, params.tid, params.bid)
+		callbackURL := buildCallbackURL(c.BaseController.Config.Server.CallbackURL, params.fid, params.uid, params.tid, params.bid)
 		config, err := c.buildEditorConfig(tctx, callbackURL, params.bid, user, file, secret)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.build_editor_configuration")); err != nil {
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, params.lang, "editor.errors.build_editor_configuration")); err != nil {
 			return err
 		}
 
 		configJSON, err := json.Marshal(config)
-		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.encode_configuration")); err != nil {
+		if err := handleRequestError(err, c.BaseController.TranslationService.Translate(tctx, params.lang, "editor.errors.encode_configuration")); err != nil {
 			return err
 		}
 

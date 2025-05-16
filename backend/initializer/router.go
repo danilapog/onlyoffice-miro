@@ -10,7 +10,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/middleware"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/middleware/authentication"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 

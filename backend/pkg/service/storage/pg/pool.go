@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	pgx "github.com/jackc/pgx/v5"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
 )
 
 func NewPostgresPool(connection string, opts ...Option) (*pgxpool.Pool, error) {

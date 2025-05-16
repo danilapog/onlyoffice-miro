@@ -6,10 +6,20 @@ IMAGE_NAME ?= server:latest
 .PHONY: all
 all: check-style test build
 
+.PHONY: lint-install
+lint-install:
+	@echo Installing golangci-lint
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.55.2
+
 .PHONY: check-style
 check-style:
 	@echo Running golangci-lint
 	@golangci-lint run ./...
+
+.PHONY: lint-fix
+lint-fix:
+	@echo Running golangci-lint with auto-fix
+	@golangci-lint run --fix ./...
 
 .PHONY: test
 test:

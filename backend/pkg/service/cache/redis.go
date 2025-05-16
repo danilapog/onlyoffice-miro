@@ -7,7 +7,7 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"github.com/redis/go-redis/v9"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type RedisCache struct {

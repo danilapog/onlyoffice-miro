@@ -15,11 +15,11 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/document"
 	oauthService "github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/oauth"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/service/settings"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 type fileManagementController struct {
-	*base.BaseController
+	base.BaseController
 }
 
 func NewFileManagementController(
@@ -33,7 +33,7 @@ func NewFileManagementController(
 	logger service.Logger,
 ) common.Handler {
 	controller := &fileManagementController{
-		BaseController: base.NewBaseController(
+		BaseController: *base.NewBaseController(
 			config,
 			miroClient,
 			jwtService,
@@ -52,14 +52,14 @@ func NewFileManagementController(
 }
 
 func (c *fileManagementController) handleGet(ctx echo.Context) error {
-	return c.ExecuteWithTimeout(ctx, 4*time.Second, func(tctx context.Context) error {
-		boardAuth, err := PrepareRequest(ctx, tctx, c.BaseController)
+	return c.BaseController.ExecuteWithTimeout(ctx, 4*time.Second, func(tctx context.Context) error {
+		boardAuth, err := PrepareRequest(ctx, tctx, &c.BaseController)
 		if err != nil {
 			return err
 		}
 
-		if fid, ferr := c.GetQueryParam(ctx, "fid"); ferr == nil {
-			file, err := GetFileInfo(ctx, tctx, c.BaseController, boardAuth.BoardID, fid, boardAuth.Authentication.AccessToken)
+		if fid, ferr := c.BaseController.GetQueryParam(ctx, "fid"); ferr == nil {
+			file, err := GetFileInfo(ctx, tctx, &c.BaseController, boardAuth.BoardID, fid, boardAuth.Authentication.AccessToken)
 			if err != nil {
 				return err
 			}
@@ -71,7 +71,7 @@ func (c *fileManagementController) handleGet(ctx echo.Context) error {
 			cursor = c
 		}
 
-		files, err := GetFilesInfo(ctx, tctx, c.BaseController, boardAuth.BoardID, cursor, boardAuth.Authentication.AccessToken)
+		files, err := GetFilesInfo(ctx, tctx, &c.BaseController, boardAuth.BoardID, cursor, boardAuth.Authentication.AccessToken)
 		if err != nil {
 			return err
 		}
@@ -81,20 +81,20 @@ func (c *fileManagementController) handleGet(ctx echo.Context) error {
 }
 
 func (c *fileManagementController) handlePost(ctx echo.Context) error {
-	return c.ExecuteWithTimeout(ctx, 15*time.Second, func(tctx context.Context) error {
+	return c.BaseController.ExecuteWithTimeout(ctx, 15*time.Second, func(tctx context.Context) error {
 		var body createBody
 		if err := json.NewDecoder(ctx.Request().Body).Decode(&body); err != nil {
-			return c.HandleError(ctx, err, http.StatusBadRequest, "failed to decode request body")
+			return c.BaseController.HandleError(ctx, err, http.StatusBadRequest, "failed to decode request body")
 		}
 
-		token, err := c.ExtractUserToken(ctx)
+		token, err := c.BaseController.ExtractUserToken(ctx)
 		if err != nil {
-			return c.HandleError(ctx, err, http.StatusBadRequest, "failed to extract authentication parameters")
+			return c.BaseController.HandleError(ctx, err, http.StatusBadRequest, "failed to extract authentication parameters")
 		}
 
-		_, auth, err := c.FetchAuthenticationWithSettings(tctx, token.User, token.Team, body.BoardId)
+		_, auth, err := c.BaseController.FetchAuthenticationWithSettings(tctx, token.User, token.Team, body.BoardId)
 		if err != nil {
-			return c.HandleError(ctx, err, http.StatusBadRequest, "failed to fetch required data")
+			return c.BaseController.HandleError(ctx, err, http.StatusBadRequest, "failed to fetch required data")
 		}
 
 		req := miro.CreateFileRequest{
@@ -105,11 +105,11 @@ func (c *fileManagementController) handlePost(ctx echo.Context) error {
 			Token:    auth.AccessToken,
 		}
 
-		response, err := CreateFile(ctx, tctx, c.BaseController, req)
+		response, err := CreateFile(ctx, tctx, &c.BaseController, req)
 		if err != nil {
 			return err
 		}
 
-		return c.SendJSON(ctx, response)
+		return c.BaseController.SendJSON(ctx, response)
 	})
 }

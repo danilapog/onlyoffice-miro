@@ -4,7 +4,7 @@ import (
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/core/component"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"github.com/jackc/pgx/v5"
+	pgx "github.com/jackc/pgx/v5"
 )
 
 const (

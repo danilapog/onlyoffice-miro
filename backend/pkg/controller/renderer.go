@@ -6,7 +6,7 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/assets"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 )
 
 type TemplateRenderer struct {
