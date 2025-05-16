@@ -41,6 +41,7 @@
     "src",
     "pages",
     "*.ts",
+    ".eslintrc.cjs",
     "vite.config.mts",
   ],
   "exclude": [

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 
-// import { checkSettings, fetchSettings, saveSettings } from '@features/settings/api/settings';
 import { fetchSettings, saveSettings } from '@features/settings/api/settings';
 
 interface SettingsState {
@@ -24,7 +23,7 @@ interface SettingsState {
   initializeSettings: () => Promise<void>;
 }
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+const useSettingsStore = create<SettingsState>((set, get) => ({
   address: '',
   header: '',
   secret: '',
@@ -51,14 +50,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         secret: settings.secret || '',
         demo: settings.demo.enabled,
         demoStarted: settings.demo.started,
-        persistedCredentials: !!(settings.address && settings.header && settings.secret),
+        persistedCredentials: !!(
+          settings.address &&
+          settings.header &&
+          settings.secret
+        ),
         loading: false,
         error: null,
       });
     } catch (error) {
-      const isAccessDenied = error instanceof Error && (error.message === 'access denied' || error.message === 'not authorized');
-      if (isAccessDenied)
-        throw error;
+      const isAccessDenied =
+        error instanceof Error &&
+        (error.message === 'access denied' ||
+          error.message === 'not authorized');
+      if (isAccessDenied) throw error;
 
       set({
         loading: false,
@@ -66,15 +71,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       });
     } finally {
       const { demoStarted, persistedCredentials } = get();
-      const isDemoExpired = demoStarted ? 
-      (() => {
-        const startTime = new Date(demoStarted).getTime();
-        const expiryDays = parseInt(import.meta.env.VITE_ASC_DEMO_EXPIRATION_DAYS || '30', 10);
-        const expiryTime = startTime + (expiryDays * 24 * 60 * 60 * 1000);
-        const currentTime = Date.now();      
-        return currentTime > expiryTime;
-      })() : false;
-      // const hasSettings = await checkSettings();
+      const isDemoExpired = demoStarted
+        ? (() => {
+            const startTime = new Date(demoStarted).getTime();
+            const expiryDays = parseInt(
+              import.meta.env.VITE_ASC_DEMO_EXPIRATION_DAYS || '30',
+              10
+            );
+            const expiryTime = startTime + expiryDays * 24 * 60 * 60 * 1000;
+            const currentTime = Date.now();
+            return currentTime > expiryTime;
+          })()
+        : false;
       set({ hasSettings: !isDemoExpired || persistedCredentials });
     }
   },
@@ -87,19 +95,27 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await saveSettings({ address, header, secret, demo });
-      set({ 
-        address, header, secret,
-        persistedCredentials: (address !== '' && header !== '' && secret !== ''),
-        demoStarted: ((demoStarted == '' || !demoStarted) && demo) ? new Date().toISOString() : demoStarted,
+      set({
+        address,
+        header,
+        secret,
+        persistedCredentials: address !== '' && header !== '' && secret !== '',
+        demoStarted:
+          (demoStarted === '' || !demoStarted) && demo
+            ? new Date().toISOString()
+            : demoStarted,
         demo,
         loading: false,
-       });
+      });
     } catch (error) {
-      const isAccessDenied = error instanceof Error && error.message === 'access denied';
+      const isAccessDenied =
+        error instanceof Error && error.message === 'access denied';
       set({
         loading: false,
         error: isAccessDenied ? 'access denied' : null,
       });
     }
   },
-})); 
+}));
+
+export default useSettingsStore;

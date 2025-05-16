@@ -1,9 +1,9 @@
 import React, { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { Footer } from '@components/Footer';
+import Footer from '@components/Footer';
 
-import { useApplicationStore } from '@stores/useApplicationStore';
+import useApplicationStore from '@stores/useApplicationStore';
 
 import '@components/layout.css';
 
@@ -19,51 +19,62 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ 
-    title,
-    subtitle,
-    footerText,
-    backTo,
-    settings,
-    help,
-    onSettings,
-    onHelp = () => window.open('https://onlyoffice.com', '_blank'),
-    children,
+const Layout: React.FC<LayoutProps> = ({
+  title,
+  subtitle,
+  footerText,
+  backTo,
+  settings,
+  help,
+  onSettings,
+  onHelp = () => window.open('https://onlyoffice.com', '_blank'),
+  children,
 }) => {
   const { admin } = useApplicationStore();
   const navigate = useNavigate();
-  
-  if (!onSettings)
-    onSettings = () => navigate("/settings");
-  
+
+  const handleSettings = onSettings || (() => navigate('/settings'));
+
   const showSettings = settings !== false && admin;
   return (
     <div className="layout-container">
       <div className="layout-header">
         <div className="layout-shifted">
           {backTo ? (
-            <div className='layout-title'>
-              <Link to={backTo} className='layout-title__back'>
-                <img src="/arrow-left.svg" alt="Back" className="layout-title__back-icon" />
-                <span className="layout-title__back-text" title={title}>{title}</span>
+            <div className="layout-title">
+              <Link to={backTo} className="layout-title__back">
+                <img
+                  src="/arrow-left.svg"
+                  alt="Back"
+                  className="layout-title__back-icon"
+                />
+                <span className="layout-title__back-text" title={title}>
+                  {title}
+                </span>
               </Link>
             </div>
           ) : (
-            <div className="layout-title" title={title}>{title}</div>
-          )}
-          {subtitle && (
-            <div className="layout-subtitle">
-              {subtitle}
+            <div className="layout-title" title={title}>
+              {title}
             </div>
           )}
+          {subtitle && <div className="layout-subtitle">{subtitle}</div>}
         </div>
       </div>
-      <div className="layout-main">
-        {children}
-      </div>
+      <div className="layout-main">{children}</div>
       <div className="layout-footer">
-        <Footer text={footerText} settings={showSettings} help={help} onSettingsClick={onSettings} onHelpClick={onHelp} />
+        <Footer
+          text={footerText}
+          settings={showSettings}
+          help={help}
+          onSettingsClick={handleSettings}
+          onHelpClick={onHelp}
+        />
       </div>
     </div>
   );
-}; 
+};
+
+Layout.displayName = 'Layout';
+
+export default Layout;

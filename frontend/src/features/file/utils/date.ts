@@ -1,4 +1,4 @@
-export const formatDate = (dateString?: string) => {
+const formatDate = (dateString?: string) => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
@@ -8,3 +8,5 @@ export const formatDate = (dateString?: string) => {
 
   return `${day}.${month}.${year}`;
 };
+
+export default formatDate;

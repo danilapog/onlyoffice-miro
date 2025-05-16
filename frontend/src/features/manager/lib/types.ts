@@ -1,8 +1,8 @@
 export type FileCreatedResponse = {
-    id: string;
-    createdAt: string;
-    modifiedAt: string;
-    links: {
-        self: string;
-    };
-}
+  id: string;
+  createdAt: string;
+  modifiedAt: string;
+  links: {
+    self: string;
+  };
+};

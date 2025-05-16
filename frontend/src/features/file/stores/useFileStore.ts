@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { Document } from '@features/file/lib/types';
 
-import { generateRandomString } from '@utils/random';
+import randomUtils from '@utils/random';
 
 import {
   convertDocument,
@@ -45,11 +45,10 @@ interface FilesState {
 }
 
 const filterDocuments = (documents: Document[], query: string): Document[] => {
-  if (!query.trim())
-    return documents;
+  if (!query.trim()) return documents;
 
   const lowerCaseQuery = query.toLowerCase();
-  return documents.filter(doc =>
+  return documents.filter((doc) =>
     doc.data?.title?.toLowerCase().includes(lowerCaseQuery)
   );
 };
@@ -76,7 +75,7 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     set({ filteredDocuments });
   },
   setObserverRef: (node: HTMLElement | null) => {
-    if (!node) return;
+    if (!node) return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -91,16 +90,13 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   },
   toggleDropdown: (id: string | null) => {
     const { activeDropdown } = get();
-    if (activeDropdown === id)
-      set({ activeDropdown: null });
-    else
-      set({ activeDropdown: id });
+    if (activeDropdown === id) set({ activeDropdown: null });
+    else set({ activeDropdown: id });
   },
 
   loadMoreDocuments: async () => {
     const { loading, cursor, initialized } = get();
-    if (loading || !cursor || !initialized)
-      return;
+    if (loading || !cursor || !initialized) return;
 
     set({ loading: true });
     try {
@@ -110,27 +106,27 @@ export const useFilesStore = create<FilesState>((set, get) => ({
         return;
       }
 
-      set(state => ({
+      set((state) => ({
         documents: [...state.documents, ...pageable.data],
         loading: false,
         cursor: pageable.cursor,
       }));
 
-      if (pageable.cursor)
-        await get().loadMoreDocuments();
+      if (pageable.cursor) await get().loadMoreDocuments();
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message === "not authorized" || error.message === "access denied") {
+        if (
+          error.message === 'not authorized' ||
+          error.message === 'access denied'
+        ) {
           set({ loading: false, authError: true });
-        } else if (error.message === "document server configuration error") {
+        } else if (error.message === 'document server configuration error') {
           set({ loading: false, serverConfigError: true });
         } else {
           set({ loading: false });
-          console.error('Error loading more documents:', error);
         }
       } else {
         set({ loading: false });
-        console.error('Error loading more documents:', error);
       }
     }
   },
@@ -146,23 +142,25 @@ export const useFilesStore = create<FilesState>((set, get) => ({
           documents: pageable.data,
           loading: false,
           cursor: pageable.cursor,
-          initialized: true
+          initialized: true,
         });
 
-        if (pageable.cursor)
-          await get().loadMoreDocuments();
+        if (pageable.cursor) await get().loadMoreDocuments();
       } else {
-        set(state => ({
+        set((state) => ({
           documents: [...pageable.data, ...state.documents],
           loading: false,
-          cursor: pageable.cursor || state.cursor
+          cursor: pageable.cursor || state.cursor,
         }));
       }
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message === "not authorized" || error.message === "access denied") {
+        if (
+          error.message === 'not authorized' ||
+          error.message === 'access denied'
+        ) {
           set({ loading: false, authError: true });
-        } else if (error.message === "document server configuration error") {
+        } else if (error.message === 'document server configuration error') {
           set({ loading: false, serverConfigError: true });
         } else {
           set({ loading: false });
@@ -181,17 +179,19 @@ export const useFilesStore = create<FilesState>((set, get) => ({
       set({ converting: true });
       const response = await convertDocument(document.id);
       const { url, token } = response;
-      const cresponse = await fetch(`${url}/converter?shardKey=${generateRandomString(8)}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          token,
-        }),
-      });
+      const cresponse = await fetch(
+        `${url}/converter?shardKey=${randomUtils.generateRandomString(8)}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            token,
+          }),
+        }
+      );
       const { fileUrl } = await cresponse.json();
       window.open(fileUrl, '_blank');
       set({ activeDropdown: null, converting: false });
     } catch (error) {
-      console.error('Error converting the document to pdf:', error);
       set({ converting: false });
     }
   },
@@ -204,12 +204,11 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   },
 
   updateOnCreate: (documents: Document[]) => {
-    set(state => {
-      const existing = new Set(state.documents.map(doc => doc.id));
-      const docs = documents.filter(doc => !existing.has(doc.id));
+    set((state) => {
+      const existing = new Set(state.documents.map((doc) => doc.id));
+      const docs = documents.filter((doc) => !existing.has(doc.id));
 
-      if (docs.length === 0)
-        return state;
+      if (docs.length === 0) return state;
 
       const merged = [...state.documents, ...docs];
       return {
@@ -219,14 +218,17 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     });
   },
   updateOnUpdate: (documents: Document[]) => {
-    set(state => {
-      const docsMap = new Map(documents.map(doc => [doc.id, doc]));
+    set((state) => {
+      const docsMap = new Map(documents.map((doc) => [doc.id, doc]));
       const docs = [...state.documents];
-      docs.forEach(doc => {
-        const updatedDoc = docsMap.get(doc.id);
+      docs.forEach((docItem) => {
+        const updatedDoc = docsMap.get(docItem.id);
         if (updatedDoc) {
-          doc.createdAt = updatedDoc.createdAt || doc.createdAt;
-          doc.modifiedAt = updatedDoc.modifiedAt || doc.modifiedAt;
+          const updatedDocItem = { ...docItem };
+          updatedDocItem.createdAt = updatedDoc.createdAt || docItem.createdAt;
+          updatedDocItem.modifiedAt =
+            updatedDoc.modifiedAt || docItem.modifiedAt;
+          Object.assign(docItem, updatedDocItem);
         }
       });
       return {
@@ -236,12 +238,14 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     });
   },
   updateOnDelete: (ids: string[]) => {
-    set(state => {
-      const docs = state.documents.filter(doc => !ids.includes(doc.id));
+    set((state) => {
+      const docs = state.documents.filter((doc) => !ids.includes(doc.id));
       return {
         documents: docs,
         filteredDocuments: filterDocuments(docs, state.searchQuery),
       };
     });
-  }
+  },
 }));
+
+export default useFilesStore;

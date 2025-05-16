@@ -5,15 +5,15 @@ import { createRoot } from 'react-dom/client';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 
 import { CenterLayout } from '@components/CenterLayout';
-import { Spinner } from '@components/Spinner';
+import Spinner from '@components/Spinner';
 
-import { CreationPage } from '@app/pages/creation';
-import { Installation } from '@features/manager/components/Installation';
-import { ManagerPage } from '@app/pages/manager';
-import { SettingsPage } from '@app/pages/settings';
+import CreationPage from '@app/pages/creation';
+import Installation from '@features/manager/components/Installation';
+import ManagerPage from '@app/pages/manager';
+import SettingsPage from '@app/pages/settings';
 
-import { useFilesStore } from '@features/file/stores/useFileStore';
-import { useApplicationStore } from '@stores/useApplicationStore';
+import useFilesStore from '@features/file/stores/useFileStore';
+import useApplicationStore from '@stores/useApplicationStore';
 import { EmitterEvents } from '@stores/useEmitterStore';
 
 import '@app/transitions.css';
@@ -23,10 +23,11 @@ const App = () => {
   const nodeRef = useRef(null);
   const location = useLocation();
   const { refreshDocuments } = useFilesStore();
-  const { loading, authorized, admin, reloadAuthorization } = useApplicationStore();
+  const { loading, authorized, admin, reloadAuthorization } =
+    useApplicationStore();
 
   const [prevPathname, setPrevPathname] = useState(location.pathname);
-  
+
   useEffect(() => {
     reloadAuthorization();
     refreshDocuments();
@@ -36,20 +37,20 @@ const App = () => {
     return () => {
       miro?.board.events.off(EmitterEvents.REFRESH_DOCUMENTS, refreshDocuments);
     };
-  }, []);
+  }, [refreshDocuments, reloadAuthorization]);
 
   useEffect(() => {
     const isBack = prevPathname.length > location.pathname.length;
-    if (!location.state)
-      location.state = { isBack };
+    if (!location.state) location.state = { isBack };
     setPrevPathname(location.pathname);
-  }, [location.pathname]);
+  }, [location, location.pathname, prevPathname.length]);
 
-  if (loading) return (
-    <CenterLayout style={{ height: '100vh' }}>
-      <Spinner size="large" />
-    </CenterLayout>
-  );
+  if (loading)
+    return (
+      <CenterLayout style={{ height: '100vh' }}>
+        <Spinner size="large" />
+      </CenterLayout>
+    );
 
   if (!authorized) return <Installation />;
 
@@ -60,7 +61,7 @@ const App = () => {
           key={location.pathname}
           nodeRef={nodeRef}
           timeout={300}
-          classNames={location.state?.isBack ? "page-back" : "page-forward"}
+          classNames={location.state?.isBack ? 'page-back' : 'page-forward'}
           unmountOnExit
         >
           <div ref={nodeRef}>

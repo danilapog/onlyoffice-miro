@@ -5,18 +5,16 @@ import enTranslations from './locales/en.json';
 
 const resources = {
   en: {
-    translation: enTranslations
+    translation: enTranslations,
   },
 };
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: 'en',
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en',
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
-export default i18n; 
+export default i18n;

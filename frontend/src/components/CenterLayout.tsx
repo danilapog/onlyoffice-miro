@@ -8,16 +8,13 @@ export interface CenterLayoutProps {
   style?: CSSProperties;
 }
 
-export const CenterLayout: React.FC<CenterLayoutProps> = ({ 
-  children, 
-  className = '', 
-  style 
+export const CenterLayout: React.FC<CenterLayoutProps> = ({
+  children,
+  className = '',
+  style,
 }) => {
   return (
-    <div 
-      className={`center-layout ${className}`} 
-      style={style}
-    >
+    <div className={`center-layout ${className}`} style={style}>
       {children}
     </div>
   );

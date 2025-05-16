@@ -1,4 +1,4 @@
-export const getIcon = (title?: string) => {
+const getIcon = (title?: string) => {
   if (!title) return '/other.svg';
 
   if (title.endsWith('.docx')) return '/word.svg';
@@ -8,3 +8,5 @@ export const getIcon = (title?: string) => {
 
   return '/other.svg';
 };
+
+export default getIcon;

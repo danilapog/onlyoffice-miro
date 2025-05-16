@@ -2,7 +2,10 @@ import { create } from 'zustand';
 
 import { FileCreatedResponse } from '@features/manager/lib/types';
 
-import { createFile as createMiroFile, fetchSupportedFileTypes } from '@features/manager/api/file';
+import {
+  createFile as createMiroFile,
+  fetchSupportedFileTypes,
+} from '@features/manager/api/file';
 
 interface CreatorState {
   selectedName: string;
@@ -19,7 +22,7 @@ interface CreatorState {
   resetSelected: () => void;
 }
 
-export const useCreatorStore = create<CreatorState>((set, get) => ({
+const useCreatorStore = create<CreatorState>((set, get) => ({
   selectedName: '',
   selectedType: '',
 
@@ -53,3 +56,4 @@ export const useCreatorStore = create<CreatorState>((set, get) => ({
   },
 }));
 
+export default useCreatorStore;

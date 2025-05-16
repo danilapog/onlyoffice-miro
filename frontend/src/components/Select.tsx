@@ -25,7 +25,7 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <div className="select-container">
       <div className="select-container__wrapper">
-        <select 
+        <select
           className={`select-container__field ${className}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -40,4 +40,6 @@ export const Select: React.FC<SelectProps> = ({
       </div>
     </div>
   );
-}; 
+};
+
+export default Select;
