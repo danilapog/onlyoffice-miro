@@ -23,7 +23,8 @@ lint-fix:
 
 .PHONY: test
 test:
-	$(GO) test -v $(GO_TEST_FLAGS) ./...
+	@echo Running tests
+	@$(GO) test -v $(GO_TEST_FLAGS) ./...
 
 .PHONY: build
 build:
