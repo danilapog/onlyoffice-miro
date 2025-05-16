@@ -1,3 +1,18 @@
 {
-  "placeholder": "placeholder"
+  "errors": {
+    "authentication": {
+      "missing_authentication": "Authentication is required",
+      "invalid_token": "Invalid authentication token"
+    }
+  },
+  "editor": {
+    "errors": {
+      "unauthorized": "Unauthorized access",
+      "fetch_required_data": "Failed to fetch required data",
+      "invalid_configuration": "Invalid configuration",
+      "fetch_miro_data": "Failed to fetch Miro data",
+      "build_editor_configuration": "Failed to build editor configuration",
+      "encode_configuration": "Failed to encode configuration"
+    }
+  }
 }
