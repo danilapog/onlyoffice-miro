@@ -20,11 +20,13 @@ func generateStatementName(query string) string {
 type postgresStorage[ID comparable, T any] struct {
 	pool      *pgxpool.Pool
 	processor service.StorageProcessor[ID, T, pgx.Row]
+	logger    service.Logger
 }
 
 func NewPostgresStorage[ID comparable, T any](
 	pool *pgxpool.Pool,
 	processor service.StorageProcessor[ID, T, pgx.Row],
+	logger service.Logger,
 ) (service.Storage[ID, T], error) {
 	if pool == nil {
 		return nil, ErrNilPool
@@ -32,18 +34,25 @@ func NewPostgresStorage[ID comparable, T any](
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+
+	logger.Debug(ctx, "Testing database connection")
 	if err := pool.Ping(ctx); err != nil {
+		logger.Error(ctx, "Failed to connect to database", service.Fields{"error": err.Error()})
 		return nil, err
 	}
 
+	logger.Debug(ctx, "Database connection successful")
 	return &postgresStorage[ID, T]{
 		pool:      pool,
 		processor: processor,
+		logger:    logger,
 	}, nil
 }
 
 func (s *postgresStorage[ID, T]) Find(ctx context.Context, id ID) (T, error) {
 	var result T
+
+	s.logger.Debug(ctx, "Finding record by ID", service.Fields{"id": id})
 
 	query, args, scanner := s.processor.BuildSelectQuery(id)
 	opts := pgx.TxOptions{
@@ -58,19 +67,34 @@ func (s *postgresStorage[ID, T]) Find(ctx context.Context, id ID) (T, error) {
 		result, err = scanner(row)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
+				s.logger.Debug(ctx, "No record found", service.Fields{"id": id})
 				return ErrNoRowsAffected
 			}
 
+			s.logger.Error(ctx, "Error scanning record", service.Fields{
+				"id":    id,
+				"error": err.Error(),
+			})
 			return err
 		}
 
+		s.logger.Debug(ctx, "Record found successfully", service.Fields{"id": id})
 		return nil
 	})
+
+	if err != nil && !errors.Is(err, ErrNoRowsAffected) {
+		s.logger.Error(ctx, "Error finding record", service.Fields{
+			"id":    id,
+			"error": err.Error(),
+		})
+	}
 
 	return result, err
 }
 
 func (s *postgresStorage[ID, T]) Insert(ctx context.Context, id ID, value T) (T, error) {
+	s.logger.Debug(ctx, "Inserting new record", service.Fields{"id": id})
+
 	query, args := s.processor.BuildInsertQuery(id, value)
 	opts := pgx.TxOptions{
 		IsoLevel:   pgx.ReadCommitted,
@@ -78,13 +102,26 @@ func (s *postgresStorage[ID, T]) Insert(ctx context.Context, id ID, value T) (T,
 	}
 
 	sName := generateStatementName(query)
-	return value, executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
+	err := executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, sName, args...)
-		return err
+		if err != nil {
+			s.logger.Error(ctx, "Error inserting record", service.Fields{
+				"id":    id,
+				"error": err.Error(),
+			})
+			return err
+		}
+
+		s.logger.Debug(ctx, "Record inserted successfully", service.Fields{"id": id})
+		return nil
 	})
+
+	return value, err
 }
 
 func (s *postgresStorage[ID, T]) Update(ctx context.Context, id ID, value T) (T, error) {
+	s.logger.Debug(ctx, "Updating record", service.Fields{"id": id})
+
 	query, args := s.processor.BuildUpdateQuery(id, value)
 	opts := pgx.TxOptions{
 		IsoLevel:   pgx.ReadCommitted,
@@ -92,21 +129,41 @@ func (s *postgresStorage[ID, T]) Update(ctx context.Context, id ID, value T) (T,
 	}
 
 	sName := generateStatementName(query)
-	return value, executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
+	err := executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
 		res, err := tx.Exec(ctx, sName, args...)
 		if err != nil {
+			s.logger.Error(ctx, "Error executing update query", service.Fields{
+				"id":    id,
+				"error": err.Error(),
+			})
 			return err
 		}
 
 		if res.RowsAffected() == 0 {
+			s.logger.Debug(ctx, "No record found to update", service.Fields{"id": id})
 			return ErrNoRowsAffected
 		}
 
+		s.logger.Debug(ctx, "Record updated successfully", service.Fields{
+			"id":            id,
+			"rows_affected": res.RowsAffected(),
+		})
 		return nil
 	})
+
+	if err != nil && !errors.Is(err, ErrNoRowsAffected) {
+		s.logger.Error(ctx, "Error updating record", service.Fields{
+			"id":    id,
+			"error": err.Error(),
+		})
+	}
+
+	return value, err
 }
 
 func (s *postgresStorage[ID, T]) Delete(ctx context.Context, id ID) error {
+	s.logger.Debug(ctx, "Deleting record", service.Fields{"id": id})
+
 	query, args := s.processor.BuildDeleteQuery(id)
 	opts := pgx.TxOptions{
 		IsoLevel:   pgx.ReadCommitted,
@@ -114,16 +171,34 @@ func (s *postgresStorage[ID, T]) Delete(ctx context.Context, id ID) error {
 	}
 
 	sName := generateStatementName(query)
-	return executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
+	err := executeTransactionally(ctx, s.pool, opts, sName, query, func(tx pgx.Tx) error {
 		res, err := tx.Exec(ctx, sName, args...)
 		if err != nil {
+			s.logger.Error(ctx, "Error executing delete query", service.Fields{
+				"id":    id,
+				"error": err.Error(),
+			})
 			return err
 		}
 
 		if res.RowsAffected() == 0 {
+			s.logger.Debug(ctx, "No record found to delete", service.Fields{"id": id})
 			return ErrNoRowsAffected
 		}
 
+		s.logger.Debug(ctx, "Record deleted successfully", service.Fields{
+			"id":            id,
+			"rows_affected": res.RowsAffected(),
+		})
 		return nil
 	})
+
+	if err != nil && !errors.Is(err, ErrNoRowsAffected) {
+		s.logger.Error(ctx, "Error deleting record", service.Fields{
+			"id":    id,
+			"error": err.Error(),
+		})
+	}
+
+	return err
 }

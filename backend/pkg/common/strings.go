@@ -1,6 +1,8 @@
 package common
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -40,4 +42,23 @@ func ToTemplateLanguage(lang string) string {
 	}
 
 	return "en-US"
+}
+
+func GenerateRandomString(length int) string {
+	b := make([]byte, length)
+	rand.Read(b)
+	return base64.URLEncoding.EncodeToString(b)[:length]
+}
+
+func ToDocumentType(ftype string) DocumentType {
+	switch ftype {
+	case string(DOCX):
+		return DOCX
+	case string(PPTX):
+		return PPTX
+	case string(XLSX):
+		return XLSX
+	default:
+		return DOCX
+	}
 }

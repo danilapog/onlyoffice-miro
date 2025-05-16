@@ -3,6 +3,8 @@ package document
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 )
 
 type BuilderService interface {
@@ -14,17 +16,20 @@ type builderService struct {
 	keyGenerator       KeyGenerator
 	signatureGenerator SignatureGenerator
 	formatManager      FormatManager
+	logger             service.Logger
 }
 
 func NewBuilderService(
 	keyGenerator KeyGenerator,
 	signatureGenerator SignatureGenerator,
 	formatManager FormatManager,
+	logger service.Logger,
 ) BuilderService {
 	return &builderService{
 		keyGenerator:       keyGenerator,
 		signatureGenerator: signatureGenerator,
 		formatManager:      formatManager,
+		logger:             logger,
 	}
 }
 
@@ -34,6 +39,8 @@ func (s *builderService) Build(
 	configurer DocumentConfigurer,
 	opts ...BuilderOption,
 ) (*Config, error) {
+	s.logger.Debug(ctx, "Building document config", service.Fields{"callbackUrl": callbackUrl})
+
 	options := BuilderOptions{mode: Desktop}
 	for _, option := range opts {
 		option(&options)
@@ -41,16 +48,21 @@ func (s *builderService) Build(
 
 	title := configurer.Title()
 	ext := s.formatManager.GetFileExt(title)
+
+	s.logger.Debug(ctx, "Document info", service.Fields{"title": title, "extension": ext})
 	key, err := s.keyGenerator.Generate(ctx, configurer)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to generate key", service.Fields{"error": err.Error()})
 		return nil, err
 	}
 
 	format, exists := s.formatManager.GetFormatByName(ext)
 	if !exists {
+		s.logger.Error(ctx, "Unsupported format", service.Fields{"extension": ext})
 		return nil, ErrUnsupportedFormat
 	}
 
+	s.logger.Debug(ctx, "Format determined", service.Fields{"documentType": format.Type, "isEditable": format.IsEditable()})
 	config := &Config{
 		Document: Document{
 			Key:      key,
@@ -76,28 +88,39 @@ func (s *builderService) Build(
 		}
 
 		config.Editor.Lang = uconfigurer.Language()
+		s.logger.Debug(ctx, "User configuration applied", service.Fields{
+			"userId":   uconfigurer.ID(),
+			"language": uconfigurer.Language(),
+		})
 	}
 
 	if len(options.key) > 0 {
+		s.logger.Debug(ctx, "Signing configuration")
 		if err := s.signConfig(config, options.key); err != nil {
+			s.logger.Error(ctx, "Failed to sign configuration", service.Fields{"error": err.Error()})
 			return nil, err
 		}
 	}
 
+	s.logger.Debug(ctx, "Document config built successfully", service.Fields{"key": key})
 	return config, nil
 }
 
 func (s *builderService) signConfig(config *Config, secret []byte) error {
+	s.logger.Debug(context.Background(), "Signing config")
 	buf, err := json.Marshal(config)
 	if err != nil {
+		s.logger.Error(context.Background(), "Failed to marshal config", service.Fields{"error": err.Error()})
 		return err
 	}
 
 	token, err := s.signatureGenerator.Sign(secret, buf)
 	if err != nil {
+		s.logger.Error(context.Background(), "Failed to sign config", service.Fields{"error": err.Error()})
 		return err
 	}
 
 	config.Token = token
+	s.logger.Debug(context.Background(), "Config signed successfully")
 	return nil
 }

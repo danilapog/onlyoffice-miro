@@ -1,7 +1,6 @@
 {{ define "editor" }}
 <!DOCTYPE html>
 <html>
-
 <head runat="server">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -30,16 +29,20 @@
     <title>ONLYOFFICE</title>
     <style>
         body {
-            background: #fff;
-            color: #333;
+            height: 100%;
+
+            margin: 0;
+            
+            padding: 0;
+            overflow-y: hidden;
+            
             font-family: Arial, Tahoma, sans-serif;
             font-size: 12px;
             font-weight: normal;
-            height: 100%;
-            margin: 0;
-            overflow-y: hidden;
-            padding: 0;
             text-decoration: none;
+
+            color: #333;
+            background: #fff;
         }
 
         .form {
@@ -136,6 +139,5 @@
         }
     </script>
 </body>
-
 </html>
 {{ end }}

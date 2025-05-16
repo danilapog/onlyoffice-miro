@@ -1,4 +1,4 @@
-package miro
+package common
 
 type DocumentType string
 

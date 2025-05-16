@@ -16,9 +16,10 @@ type Translation struct {
 	bundle      *i18n.Bundle
 	defaultLang string
 	langs       []string
+	logger      service.Logger
 }
 
-func NewTranslation(defaultLang string) (service.TranslationProvider, error) {
+func NewTranslation(defaultLang string, logger service.Logger) (service.TranslationProvider, error) {
 	bundle := i18n.NewBundle(language.Make(defaultLang))
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
@@ -43,21 +44,39 @@ func NewTranslation(defaultLang string) (service.TranslationProvider, error) {
 		lang := filename[:len(filename)-len(ext)]
 		langs = append(langs, lang)
 
+		logger.Debug(context.Background(), "Loading translation file", service.Fields{
+			"filename": filename,
+			"language": lang,
+		})
+
 		file, err := fs.ReadFile(assets.Translations, path.Join("translations", filename))
 		if err != nil {
+			logger.Error(context.Background(), "Failed to read translation file", service.Fields{
+				"filename": filename,
+				"error":    err,
+			})
 			return nil, err
 		}
 
 		_, err = bundle.ParseMessageFileBytes(file, filename)
 		if err != nil {
+			logger.Error(context.Background(), "Failed to parse translation file", service.Fields{
+				"filename": filename,
+				"error":    err,
+			})
 			return nil, err
 		}
+
+		logger.Debug(context.Background(), "Successfully loaded translation file", service.Fields{
+			"language": lang,
+		})
 	}
 
 	return &Translation{
 		bundle:      bundle,
 		defaultLang: defaultLang,
 		langs:       langs,
+		logger:      logger,
 	}, nil
 }
 
@@ -69,6 +88,10 @@ func (t *Translation) Translate(ctx context.Context, lang, id string) string {
 	})
 
 	if err != nil {
+		t.logger.Debug(ctx, "Translation not found", service.Fields{
+			"id":       id,
+			"language": lang,
+		})
 		return id
 	}
 

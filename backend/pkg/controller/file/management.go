@@ -25,20 +25,22 @@ type fileManagementController struct {
 func NewFileManagementController(
 	config *config.Config,
 	miroClient miro.Client,
+	jwtService crypto.Signer,
 	builderService document.BuilderService,
 	oauthService oauthService.OAuthService[miro.AuthenticationResponse],
 	settingsService settings.SettingsService,
-	jwtService crypto.Signer,
+	translationService service.TranslationProvider,
 	logger service.Logger,
 ) common.Handler {
 	controller := &fileManagementController{
 		BaseController: base.NewBaseController(
 			config,
 			miroClient,
+			jwtService,
 			builderService,
 			oauthService,
 			settingsService,
-			jwtService,
+			translationService,
 			logger,
 		),
 	}
@@ -98,7 +100,7 @@ func (c *fileManagementController) handlePost(ctx echo.Context) error {
 		req := miro.CreateFileRequest{
 			BoardID:  body.BoardId,
 			Name:     body.FileName,
-			Type:     toDocumentType(body.FileType),
+			Type:     common.ToDocumentType(body.FileType),
 			Language: common.ToTemplateLanguage(body.FileLang),
 			Token:    auth.AccessToken,
 		}

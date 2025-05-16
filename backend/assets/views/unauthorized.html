@@ -1,6 +1,6 @@
 {{ define "unauthorized" }}
 <!DOCTYPE html>
-<html lang="{{ .language }}">
+<html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -15,24 +15,27 @@
     <title>ONLYOFFICE</title>
     <style>
         body {
-            font-family: "Open Sans", sans-serif;
+            height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            flex-direction: column;
+
             margin: 0;
-            background-color: #fff;
+
             font-family: "Open Sans", sans-serif;
+
+            background-color: #fff;
         }
 
-        .message__authorization {
+        .message {
+            margin-top: 20px;
+
             font-weight: 600;
             font-size: 23px;
             line-height: 28px;
             letter-spacing: 0px;
             text-align: center;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -132,7 +135,7 @@
             </filter>
         </defs>
     </svg>
-    <div class="message__authorization">{{ .authorizationError }}</div>
+    <div class="message">{{ .authorizationError }}</div>
 </body>
 </html>
 {{ end }}

@@ -88,18 +88,18 @@ func (c *settingsController) handleGet(ctx echo.Context) error {
 
 	bid, token, err := validateRequest(ctx)
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "invalid request", service.Fields{"error": err})
+		c.logger.Error(ctx.Request().Context(), "Invalid request", service.Fields{"error": err})
 		return ctx.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 	}
 
 	user, err := c.oauthService.Find(tctx, token.Team, token.User)
 	if err != nil {
 		if errors.Is(err, oauth.ErrTokenMissing) {
-			c.logger.Error(ctx.Request().Context(), "authentication error", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
+			c.logger.Error(ctx.Request().Context(), "Authentication error", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
 			return ctx.JSON(http.StatusUnauthorized, common.ErrorResponse{Error: err.Error()})
 		}
 
-		c.logger.Error(ctx.Request().Context(), "failed to fetch user authentication", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
+		c.logger.Error(ctx.Request().Context(), "Failed to fetch user authentication", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
 		return ctx.JSON(http.StatusInternalServerError, common.ErrorResponse{Error: err.Error()})
 	}
 
@@ -110,22 +110,22 @@ func (c *settingsController) handleGet(ctx echo.Context) error {
 	})
 
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "failed to get board member", service.Fields{"error": err, "board_id": bid, "user_id": token.User})
+		c.logger.Error(ctx.Request().Context(), "Failed to get board member", service.Fields{"error": err, "board_id": bid, "user_id": token.User})
 		return ctx.JSON(http.StatusInternalServerError, common.ErrorResponse{Error: err.Error()})
 	}
 
 	if strings.ToLower(member.Role) != "owner" {
-		c.logger.Warn(ctx.Request().Context(), "access denied: not board owner", service.Fields{"user_id": token.User, "board_id": bid, "role": member.Role})
-		return ctx.JSON(http.StatusForbidden, common.ErrorResponse{Error: "only owners can access this endpoint"})
+		c.logger.Warn(ctx.Request().Context(), "Access denied: not board owner", service.Fields{"user_id": token.User, "board_id": bid, "role": member.Role})
+		return ctx.JSON(http.StatusForbidden, common.ErrorResponse{Error: "Only owners can access this endpoint"})
 	}
 
 	settings, err := c.settingsService.Find(tctx, token.Team, bid)
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "failed to fetch settings", service.Fields{"error": err, "board_id": bid, "team_id": token.Team})
+		c.logger.Error(ctx.Request().Context(), "Failed to fetch settings", service.Fields{"error": err, "board_id": bid, "team_id": token.Team})
 		return ctx.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 	}
 
-	c.logger.Info(ctx.Request().Context(), "settings retrieved successfully", service.Fields{"board_id": bid, "user_id": token.User, "team_id": token.Team})
+	c.logger.Info(ctx.Request().Context(), "Settings retrieved successfully", service.Fields{"board_id": bid, "user_id": token.User, "team_id": token.Team})
 	return ctx.JSON(http.StatusOK, settings)
 }
 
@@ -135,13 +135,13 @@ func (c *settingsController) handlePost(ctx echo.Context) error {
 
 	body, token, err := validatePersistRequest(ctx)
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "invalid request body", service.Fields{"error": err})
+		c.logger.Error(ctx.Request().Context(), "Invalid request body", service.Fields{"error": err})
 		return ctx.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 	}
 
 	user, err := c.oauthService.Find(tctx, token.Team, token.User)
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "failed to fetch user authentication", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
+		c.logger.Error(ctx.Request().Context(), "Failed to fetch user authentication", service.Fields{"error": err, "user_id": token.User, "team_id": token.Team})
 		return ctx.JSON(http.StatusUnauthorized, common.ErrorResponse{Error: err.Error()})
 	}
 
@@ -152,13 +152,13 @@ func (c *settingsController) handlePost(ctx echo.Context) error {
 	})
 
 	if err != nil {
-		c.logger.Error(ctx.Request().Context(), "failed to get board member", service.Fields{"error": err, "board_id": body.BoardID, "user_id": token.User})
+		c.logger.Error(ctx.Request().Context(), "Failed to get board member", service.Fields{"error": err, "board_id": body.BoardID, "user_id": token.User})
 		return ctx.JSON(http.StatusInternalServerError, common.ErrorResponse{Error: err.Error()})
 	}
 
 	if strings.ToLower(member.Role) != "owner" {
-		c.logger.Warn(ctx.Request().Context(), "access denied: not board owner", service.Fields{"user_id": token.User, "board_id": body.BoardID, "role": member.Role})
-		return ctx.JSON(http.StatusForbidden, common.ErrorResponse{Error: "only owners can access this endpoint"})
+		c.logger.Warn(ctx.Request().Context(), "Access denied: not board owner", service.Fields{"user_id": token.User, "board_id": body.BoardID, "role": member.Role})
+		return ctx.JSON(http.StatusForbidden, common.ErrorResponse{Error: "Only owners can access this endpoint"})
 	}
 
 	if err := c.settingsService.Save(
@@ -170,10 +170,10 @@ func (c *settingsController) handlePost(ctx echo.Context) error {
 		settings.WithSecret(body.Secret),
 		settings.WithDemo(body.Demo),
 	); err != nil {
-		c.logger.Error(ctx.Request().Context(), "failed to save settings", service.Fields{"error": err, "board_id": body.BoardID, "team_id": token.Team})
+		c.logger.Error(ctx.Request().Context(), "Failed to save settings", service.Fields{"error": err, "board_id": body.BoardID, "team_id": token.Team})
 		return ctx.JSON(http.StatusInternalServerError, common.ErrorResponse{Error: err.Error()})
 	}
 
-	c.logger.Info(ctx.Request().Context(), "settings updated successfully", service.Fields{"board_id": body.BoardID, "user_id": token.User, "team_id": token.Team})
+	c.logger.Info(ctx.Request().Context(), "Settings updated successfully", service.Fields{"board_id": body.BoardID, "user_id": token.User, "team_id": token.Team})
 	return ctx.JSON(http.StatusOK, nil)
 }

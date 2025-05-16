@@ -23,33 +23,36 @@ import (
 
 type BaseController struct {
 	*common.BaseHandler
-	Config          *config.Config
-	MiroClient      miro.Client
-	BuilderService  document.BuilderService
-	OAuthService    oauthService.OAuthService[miro.AuthenticationResponse]
-	SettingsService settings.SettingsService
-	JwtService      crypto.Signer
-	Logger          service.Logger
+	Config             *config.Config
+	MiroClient         miro.Client
+	JwtService         crypto.Signer
+	BuilderService     document.BuilderService
+	OAuthService       oauthService.OAuthService[miro.AuthenticationResponse]
+	SettingsService    settings.SettingsService
+	TranslationService service.TranslationProvider
+	Logger             service.Logger
 }
 
 func NewBaseController(
 	config *config.Config,
 	miroClient miro.Client,
+	jwtService crypto.Signer,
 	builderService document.BuilderService,
 	oauthService oauthService.OAuthService[miro.AuthenticationResponse],
 	settingsService settings.SettingsService,
-	jwtService crypto.Signer,
+	translationService service.TranslationProvider,
 	logger service.Logger,
 ) *BaseController {
 	return &BaseController{
-		BaseHandler:     &common.BaseHandler{},
-		Config:          config,
-		MiroClient:      miroClient,
-		BuilderService:  builderService,
-		OAuthService:    oauthService,
-		SettingsService: settingsService,
-		JwtService:      jwtService,
-		Logger:          logger,
+		BaseHandler:        &common.BaseHandler{},
+		Config:             config,
+		MiroClient:         miroClient,
+		JwtService:         jwtService,
+		BuilderService:     builderService,
+		OAuthService:       oauthService,
+		SettingsService:    settingsService,
+		TranslationService: translationService,
+		Logger:             logger,
 	}
 }
 
@@ -82,7 +85,7 @@ func (c *BaseController) FetchAuthenticationWithSettings(ctx context.Context, ui
 		settings, err = c.SettingsService.Find(ctx, tid, bid)
 		if err != nil {
 			settingsErr = err
-			return fmt.Errorf("failed to fetch settings: %w", err)
+			return err
 		}
 
 		if settings.Demo.Enabled && (settings.Address == "" || settings.Header == "" || settings.Secret == "") {
@@ -103,7 +106,7 @@ func (c *BaseController) FetchAuthenticationWithSettings(ctx context.Context, ui
 		auth, err = c.OAuthService.Find(ctx, tid, uid)
 		if err != nil {
 			authErr = err
-			return fmt.Errorf("failed to fetch auth: %w", err)
+			return err
 		}
 
 		return nil
@@ -122,8 +125,8 @@ func (c *BaseController) FetchAuthenticationWithSettings(ctx context.Context, ui
 	return &settings, &auth, nil
 }
 
-func (c *BaseController) SendError(ctx echo.Context, status int, err error) error {
-	return ctx.JSON(status, common.ErrorResponse{Error: err.Error()})
+func (c *BaseController) SendError(ctx echo.Context, status int, message string) error {
+	return ctx.JSON(status, common.ErrorResponse{Error: message})
 }
 
 func (c *BaseController) SendJSON(ctx echo.Context, data any) error {
@@ -133,7 +136,7 @@ func (c *BaseController) SendJSON(ctx echo.Context, data any) error {
 func (c *BaseController) HandleError(ctx echo.Context, err error, status int, message string) error {
 	if err != nil {
 		c.Logger.Error(ctx.Request().Context(), message, service.Fields{"error": err})
-		return c.SendError(ctx, status, fmt.Errorf("%s: %w", message, err))
+		return c.SendError(ctx, status, message)
 	}
 	return nil
 }

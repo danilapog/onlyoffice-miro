@@ -15,6 +15,7 @@ import (
 
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/assets"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/config"
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/internal/pkg/service"
 	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 )
 
@@ -22,9 +23,10 @@ type client struct {
 	baseUrl    string
 	httpClient *http.Client
 	errors     *Errors
+	logger     service.Logger
 }
 
-func NewMiroClient(config *config.MiroConfig) Client {
+func NewMiroClient(config *config.MiroConfig, logger service.Logger) Client {
 	return &client{
 		baseUrl: config.BaseURL,
 		errors:  NewErrors(),
@@ -39,6 +41,7 @@ func NewMiroClient(config *config.MiroConfig) Client {
 			},
 			),
 		},
+		logger: logger,
 	}
 }
 
@@ -57,8 +60,11 @@ func (c *client) sendRequest(
 	headers map[string]string,
 	result any,
 ) error {
+	c.logger.Info(ctx, fmt.Sprintf("Sending %s request to %s", method, url))
+
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to create request: %v", err))
 		return c.errors.FailedToCreateRequest(err)
 	}
 
@@ -74,16 +80,21 @@ func (c *client) sendRequest(
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to send request: %v", err))
 		return c.errors.FailedToSendRequest(err)
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode >= 300 || res.StatusCode < 200 {
+		c.logger.Error(ctx, fmt.Sprintf("Request failed with status code: %d", res.StatusCode))
 		return c.errors.RequestFailed(res.StatusCode)
 	}
 
+	c.logger.Debug(ctx, fmt.Sprintf("Request successful with status code: %d", res.StatusCode))
+
 	if result != nil {
 		if err := json.NewDecoder(res.Body).Decode(result); err != nil {
+			c.logger.Error(ctx, fmt.Sprintf("Failed to decode response: %v", err))
 			return c.errors.FailedToDecodeResponse(err)
 		}
 	}
@@ -92,7 +103,13 @@ func (c *client) sendRequest(
 }
 
 func (c *client) GetFileInfo(ctx context.Context, req GetFileInfoRequest) (*FileInfoResponse, error) {
+	c.logger.Info(ctx, "Getting file info", service.Fields{
+		"boardId": req.BoardID,
+		"itemId":  req.ItemID,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid get file info request: %v", err))
 		return nil, err
 	}
 
@@ -102,11 +119,20 @@ func (c *client) GetFileInfo(ctx context.Context, req GetFileInfoRequest) (*File
 		return nil, c.errors.FailedToGetFileInfo(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully retrieved file info", service.Fields{
+		"boardId": req.BoardID,
+		"itemId":  req.ItemID,
+	})
 	return &response, nil
 }
 
 func (c *client) GetFilesInfo(ctx context.Context, req GetFilesInfoRequest) (*FilesInfoResponse, error) {
+	c.logger.Info(ctx, "Getting files info", service.Fields{
+		"boardId": req.BoardID,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid get files info request: %v", err))
 		return nil, err
 	}
 
@@ -118,17 +144,29 @@ func (c *client) GetFilesInfo(ctx context.Context, req GetFilesInfoRequest) (*Fi
 		sb.WriteString("&cursor=")
 		sb.WriteString(req.Cursor)
 		url = sb.String()
+		c.logger.Debug(ctx, "Using cursor for pagination", service.Fields{
+			"cursor": req.Cursor,
+		})
 	}
 
 	if err := c.sendRequest(ctx, http.MethodGet, url, req.Token, nil, nil, &response); err != nil {
 		return nil, c.errors.FailedToGetFileInfo(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully retrieved files info", service.Fields{
+		"boardId":   req.BoardID,
+		"itemCount": len(response.Data),
+	})
 	return &response, nil
 }
 
 func (c *client) GetFilePublicURL(ctx context.Context, req GetFilePublicURLRequest) (*FileLocationResponse, error) {
+	c.logger.Info(ctx, "Getting file public URL", service.Fields{
+		"url": req.URL,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid get file public URL request: %v", err))
 		return nil, err
 	}
 
@@ -137,11 +175,18 @@ func (c *client) GetFilePublicURL(ctx context.Context, req GetFilePublicURLReque
 		return nil, c.errors.FailedToGetFileURL(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully retrieved file public URL")
 	return &response, nil
 }
 
 func (c *client) GetBoardMember(ctx context.Context, req GetBoardMemberRequest) (*BoardMemberResponse, error) {
+	c.logger.Info(ctx, "Getting board member info", service.Fields{
+		"boardId":  req.BoardID,
+		"memberId": req.MemberID,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid get board member request: %v", err))
 		return nil, err
 	}
 
@@ -151,11 +196,21 @@ func (c *client) GetBoardMember(ctx context.Context, req GetBoardMemberRequest) 
 		return nil, c.errors.FailedToGetBoardMember(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully retrieved board member info", service.Fields{
+		"boardId":  req.BoardID,
+		"memberId": req.MemberID,
+	})
 	return &response, nil
 }
 
 func (c *client) UploadFile(ctx context.Context, req UploadFileRequest) (*FileLocationResponse, error) {
+	c.logger.Info(ctx, "Uploading file", service.Fields{
+		"boardId": req.BoardID,
+		"itemId":  req.ItemID,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid upload file request: %v", err))
 		return nil, err
 	}
 
@@ -167,6 +222,7 @@ func (c *client) UploadFile(ctx context.Context, req UploadFileRequest) (*FileLo
 
 	payload, err := json.Marshal(body)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to marshal upload request: %v", err))
 		return nil, c.errors.FailedToMarshalRequest(err)
 	}
 
@@ -181,14 +237,25 @@ func (c *client) UploadFile(ctx context.Context, req UploadFileRequest) (*FileLo
 		return nil, c.errors.FailedToUploadFile(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully uploaded file", service.Fields{
+		"boardId": req.BoardID,
+		"itemId":  req.ItemID,
+	})
 	return &response, nil
 }
 
 func (c *client) createMultipartForm(data map[string]any, filePath string) (*bytes.Buffer, string, error) {
+	// Context is not available in this method, using background context for logging
+	ctx := context.Background()
+	c.logger.Debug(ctx, "Creating multipart form", service.Fields{
+		"filePath": filePath,
+	})
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	payload, err := json.Marshal(data)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to marshal form data: %v", err))
 		return nil, "", c.errors.FailedToMarshalRequest(err)
 	}
 
@@ -197,36 +264,52 @@ func (c *client) createMultipartForm(data map[string]any, filePath string) (*byt
 	h.Set("Content-Type", "application/json")
 	part, err := writer.CreatePart(h)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to create form part: %v", err))
 		return nil, "", c.errors.FailedToCreateFormFile(err)
 	}
 
 	if _, err := part.Write(payload); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to write form data: %v", err))
 		return nil, "", c.errors.FailedToWriteFileData(err)
 	}
 
 	fileData, err := assets.Templates.ReadFile(filePath)
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to read template file: %v", err), service.Fields{
+			"filePath": filePath,
+		})
 		return nil, "", c.errors.FailedToReadFile(err)
 	}
 
 	fileWriter, err := writer.CreateFormFile("resource", filepath.Base(filePath))
 	if err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to create form file: %v", err))
 		return nil, "", c.errors.FailedToCreateFormFile(err)
 	}
 
 	if _, err := fileWriter.Write(fileData); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to write file data: %v", err))
 		return nil, "", c.errors.FailedToWriteFileData(err)
 	}
 
 	if err := writer.Close(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Failed to close form writer: %v", err))
 		return nil, "", c.errors.FailedToCloseWriter(err)
 	}
 
+	c.logger.Debug(ctx, "Successfully created multipart form")
 	return body, writer.FormDataContentType(), nil
 }
 
 func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileCreatedResponse, error) {
+	c.logger.Info(ctx, "Creating file", service.Fields{
+		"boardId":  req.BoardID,
+		"fileName": fmt.Sprintf("%s.%s", req.Name, req.Type),
+		"type":     req.Type,
+	})
+
 	if err := req.Validate(); err != nil {
+		c.logger.Error(ctx, fmt.Sprintf("Invalid create file request: %v", err))
 		return nil, err
 	}
 
@@ -234,6 +317,11 @@ func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileCr
 	templatePath := filepath.Join("templates", req.Language, assetPath)
 	_, err := assets.Templates.ReadFile(templatePath)
 	if err != nil {
+		c.logger.Warn(ctx, "Template not found, falling back to default", service.Fields{
+			"templatePath": templatePath,
+			"language":     req.Language,
+			"type":         req.Type,
+		})
 		templatePath = filepath.Join("templates", "default", assetPath)
 	}
 
@@ -256,5 +344,10 @@ func (c *client) CreateFile(ctx context.Context, req CreateFileRequest) (*FileCr
 		return nil, err
 	}
 
+	c.logger.Debug(ctx, "Successfully created file", service.Fields{
+		"boardId":  req.BoardID,
+		"itemId":   response.ID,
+		"fileName": fmt.Sprintf("%s.%s", req.Name, req.Type),
+	})
 	return &response, nil
 }

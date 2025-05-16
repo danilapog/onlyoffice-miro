@@ -18,9 +18,9 @@ func NewHeaderAuthMiddleware(
 ) *AuthMiddleware {
 	return NewAuthMiddleware(
 		config,
-		jwtService,
 		HeaderTokenExtractor(headerName),
 		NoOpRefresher(),
+		jwtService,
 		translator,
 		logger,
 	)
@@ -34,9 +34,9 @@ func NewMiroAuthMiddleware(
 ) *AuthMiddleware {
 	middleware := NewAuthMiddleware(
 		config,
-		jwtService,
 		MiroSignatureExtractor(),
 		NoOpRefresher(),
+		jwtService,
 		translator,
 		logger,
 	)
@@ -72,9 +72,9 @@ func NewCookieOAuthMiddleware(
 ) *AuthMiddleware {
 	middleware := NewAuthMiddleware(
 		config,
-		jwtService,
 		CookieTokenExtractor(config.Cookie.Name),
 		nil,
+		jwtService,
 		translator,
 		logger,
 	)

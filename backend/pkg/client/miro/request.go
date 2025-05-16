@@ -3,14 +3,70 @@ package miro
 import (
 	"fmt"
 	"strings"
+
+	"github.com/ONLYOFFICE/onlyoffice-miro/backend/pkg/common"
 )
+
+type CreateFileRequest struct {
+	BoardID  string
+	Name     string
+	Type     common.DocumentType
+	Language string
+	Token    string
+}
+
+func (r *CreateFileRequest) Validate() error {
+	if strings.TrimSpace(string(r.Type)) == "" {
+		return fmt.Errorf("documentType is required")
+	}
+
+	if strings.TrimSpace(r.Name) == "" {
+		return fmt.Errorf("name is required")
+	}
+
+	if strings.TrimSpace(r.BoardID) == "" {
+		return fmt.Errorf("boardID is required")
+	}
+
+	if strings.TrimSpace(r.Token) == "" {
+		return fmt.Errorf("token is required")
+	}
+
+	if strings.TrimSpace(r.Language) == "" {
+		r.Language = "en-US"
+	}
+
+	return nil
+}
+
+type FileUploadRequest struct {
+	Data FileUploadRequestData `json:"data"`
+}
 
 type FileUploadRequestData struct {
 	URL string `json:"url"`
 }
 
-type FileUploadRequest struct {
-	Data FileUploadRequestData `json:"data"`
+type GetBoardMemberRequest struct {
+	BoardID  string
+	MemberID string
+	Token    string
+}
+
+func (r *GetBoardMemberRequest) Validate() error {
+	if strings.TrimSpace(r.BoardID) == "" {
+		return fmt.Errorf("boardID is required")
+	}
+
+	if strings.TrimSpace(r.MemberID) == "" {
+		return fmt.Errorf("memberID is required")
+	}
+
+	if strings.TrimSpace(r.Token) == "" {
+		return fmt.Errorf("token is required")
+	}
+
+	return nil
 }
 
 type GetFileInfoRequest struct {
@@ -26,24 +82,6 @@ func (r *GetFileInfoRequest) Validate() error {
 
 	if strings.TrimSpace(r.ItemID) == "" {
 		return fmt.Errorf("itemID is required")
-	}
-
-	if strings.TrimSpace(r.Token) == "" {
-		return fmt.Errorf("token is required")
-	}
-
-	return nil
-}
-
-type GetFilesInfoRequest struct {
-	Cursor  string `json:"cursor"`
-	BoardID string `json:"board_id"`
-	Token   string `json:"token"`
-}
-
-func (r *GetFilesInfoRequest) Validate() error {
-	if strings.TrimSpace(r.BoardID) == "" {
-		return fmt.Errorf("boardID is required")
 	}
 
 	if strings.TrimSpace(r.Token) == "" {
@@ -70,19 +108,15 @@ func (r *GetFilePublicURLRequest) Validate() error {
 	return nil
 }
 
-type GetBoardMemberRequest struct {
-	BoardID  string
-	MemberID string
-	Token    string
+type GetFilesInfoRequest struct {
+	Cursor  string `json:"cursor"`
+	BoardID string `json:"board_id"`
+	Token   string `json:"token"`
 }
 
-func (r *GetBoardMemberRequest) Validate() error {
+func (r *GetFilesInfoRequest) Validate() error {
 	if strings.TrimSpace(r.BoardID) == "" {
 		return fmt.Errorf("boardID is required")
-	}
-
-	if strings.TrimSpace(r.MemberID) == "" {
-		return fmt.Errorf("memberID is required")
 	}
 
 	if strings.TrimSpace(r.Token) == "" {
@@ -114,38 +148,6 @@ func (r *UploadFileRequest) Validate() error {
 
 	if strings.TrimSpace(r.Token) == "" {
 		return fmt.Errorf("token is required")
-	}
-
-	return nil
-}
-
-type CreateFileRequest struct {
-	BoardID  string
-	Name     string
-	Type     DocumentType
-	Language string
-	Token    string
-}
-
-func (r *CreateFileRequest) Validate() error {
-	if strings.TrimSpace(string(r.Type)) == "" {
-		return fmt.Errorf("documentType is required")
-	}
-
-	if strings.TrimSpace(r.Name) == "" {
-		return fmt.Errorf("name is required")
-	}
-
-	if strings.TrimSpace(r.BoardID) == "" {
-		return fmt.Errorf("boardID is required")
-	}
-
-	if strings.TrimSpace(r.Token) == "" {
-		return fmt.Errorf("token is required")
-	}
-
-	if strings.TrimSpace(r.Language) == "" {
-		r.Language = "en-US"
 	}
 
 	return nil

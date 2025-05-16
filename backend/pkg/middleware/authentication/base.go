@@ -13,8 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// TODO: Refactor, move to commons
-
 type TokenClaims struct {
 	User string `json:"user"`
 	Team string `json:"team"`
@@ -26,44 +24,46 @@ type TokenExtractor func(c echo.Context) (string, error)
 type TokenRefresher func(c echo.Context, token *TokenClaims) error
 
 type AuthMiddleware struct {
-	config     *config.Config
-	jwtService crypto.Signer
-	extractor  TokenExtractor
-	refresher  TokenRefresher
-	translator service.TranslationProvider
-	logger     service.Logger
+	config      *config.Config
+	extractor   TokenExtractor
+	refresher   TokenRefresher
+	jwtService  crypto.Signer
+	translator  service.TranslationProvider
+	logger      service.Logger
+	defaultLang string
 }
 
 func NewAuthMiddleware(
 	config *config.Config,
-	jwtService crypto.Signer,
 	extractor TokenExtractor,
 	refresher TokenRefresher,
+	jwtService crypto.Signer,
 	translator service.TranslationProvider,
 	logger service.Logger,
 ) *AuthMiddleware {
 	return &AuthMiddleware{
-		config:     config,
-		jwtService: jwtService,
-		extractor:  extractor,
-		refresher:  refresher,
-		translator: translator,
-		logger:     logger,
+		config:      config,
+		extractor:   extractor,
+		refresher:   refresher,
+		jwtService:  jwtService,
+		translator:  translator,
+		logger:      logger,
+		defaultLang: "en",
 	}
 }
 
 func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString, err := m.extractor(c)
-		lang := "en"
-		if langParam := c.QueryParam("lang"); langParam != "" {
-			lang = langParam
+		lang := c.QueryParam("lang")
+		if lang == "" {
+			lang = m.defaultLang
 		}
 
 		if err != nil {
 			return c.Render(http.StatusOK, "unauthorized", map[string]string{
 				"language":           lang,
-				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
+				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "errors.authentication.missing_authentication"),
 			})
 		}
 
@@ -76,7 +76,7 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return c.Render(http.StatusOK, "unauthorized", map[string]string{
 				"language":           lang,
-				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
+				"authorizationError": m.translator.Translate(c.Request().Context(), lang, "errors.authentication.missing_authentication"),
 			})
 		}
 
@@ -84,7 +84,7 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			if err := m.refresher(c, token); err != nil {
 				return c.Render(http.StatusOK, "unauthorized", map[string]string{
 					"language":           lang,
-					"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
+					"authorizationError": m.translator.Translate(c.Request().Context(), lang, "errors.authentication.missing_authentication"),
 				})
 			}
 		}
@@ -186,15 +186,15 @@ func (m *AuthMiddleware) ClearAuthCookie(c echo.Context) {
 
 func (m *AuthMiddleware) GetCookieExpiration(c echo.Context) error {
 	tokenString, err := m.extractor(c)
-	lang := "en"
-	if langParam := c.QueryParam("lang"); langParam != "" {
-		lang = langParam
+	lang := c.QueryParam("lang")
+	if lang == "" {
+		lang = m.defaultLang
 	}
 
 	if err != nil {
 		return c.Render(http.StatusOK, "unauthorized", map[string]string{
 			"language":           lang,
-			"authorizationError": m.translator.Translate(c.Request().Context(), lang, "missing_authentication"),
+			"authorizationError": m.translator.Translate(c.Request().Context(), lang, "errors.authentication.missing_authentication"),
 		})
 	}
 
@@ -202,7 +202,7 @@ func (m *AuthMiddleware) GetCookieExpiration(c echo.Context) error {
 	if err != nil {
 		return c.Render(http.StatusOK, "unauthorized", map[string]string{
 			"language":           lang,
-			"authorizationError": "Invalid token",
+			"authorizationError": m.translator.Translate(c.Request().Context(), lang, "errors.authentication.invalid_token"),
 		})
 	}
 

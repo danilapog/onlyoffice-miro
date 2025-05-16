@@ -22,6 +22,7 @@ type oauthService[T any] struct {
 	oauthClient    oauth.OAuthClient[T]
 	oauthConverter OAuthable[T]
 	storageService service.Storage[core.AuthCompositeKey, component.Authentication]
+	logger         service.Logger
 }
 
 func NewOAuthService[T any](
@@ -29,12 +30,14 @@ func NewOAuthService[T any](
 	oauthClient oauth.OAuthClient[T],
 	oauthConverter OAuthable[T],
 	storageService service.Storage[core.AuthCompositeKey, component.Authentication],
+	logger service.Logger,
 ) OAuthService[T] {
 	return &oauthService[T]{
 		cipher:         cipher,
 		oauthClient:    oauthClient,
 		oauthConverter: oauthConverter,
 		storageService: storageService,
+		logger:         logger,
 	}
 }
 
@@ -97,8 +100,18 @@ func (s *oauthService[T]) createDecryptedAuth(token component.Authentication) (c
 }
 
 func (s *oauthService[T]) Save(ctx context.Context, teamID, userID string, token component.Authentication) error {
+	s.logger.Info(ctx, "Saving OAuth token", service.Fields{
+		"teamID": teamID,
+		"userID": userID,
+	})
+
 	auth, err := s.createEncryptedAuth(token)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to encrypt OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return err
 	}
 
@@ -106,10 +119,29 @@ func (s *oauthService[T]) Save(ctx context.Context, teamID, userID string, token
 		TeamID: teamID,
 		UserID: userID,
 	}, auth)
+
+	if err != nil {
+		s.logger.Error(ctx, "Failed to save OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
+	} else {
+		s.logger.Info(ctx, "Successfully saved OAuth token", service.Fields{
+			"teamID": teamID,
+			"userID": userID,
+		})
+	}
+
 	return err
 }
 
 func (s *oauthService[T]) Find(ctx context.Context, teamID, userID string) (component.Authentication, error) {
+	s.logger.Info(ctx, "Finding OAuth token", service.Fields{
+		"teamID": teamID,
+		"userID": userID,
+	})
+
 	key := core.AuthCompositeKey{
 		TeamID: teamID,
 		UserID: userID,
@@ -118,43 +150,95 @@ func (s *oauthService[T]) Find(ctx context.Context, teamID, userID string) (comp
 	storedAuth, err := s.storageService.Find(ctx, key)
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRowsAffected) {
+			s.logger.Warn(ctx, "OAuth token not found", service.Fields{
+				"teamID": teamID,
+				"userID": userID,
+			})
 			return storedAuth, ErrTokenMissing
 		}
 
+		s.logger.Error(ctx, "Error finding OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return storedAuth, err
 	}
 
 	if storedAuth.AccessToken == "" {
+		s.logger.Warn(ctx, "OAuth token is empty", service.Fields{
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return storedAuth, ErrTokenMissing
 	}
 
 	if time.Now().Unix() <= int64(storedAuth.ExpiresAt) {
+		s.logger.Info(ctx, "Using existing OAuth token", service.Fields{
+			"teamID":    teamID,
+			"userID":    userID,
+			"expiresAt": storedAuth.ExpiresAt,
+		})
 		return s.createDecryptedAuth(storedAuth)
 	}
 
+	s.logger.Info(ctx, "OAuth token expired, refreshing", service.Fields{
+		"teamID": teamID,
+		"userID": userID,
+	})
+
 	refreshToken, err := s.cipher.Decrypt(storedAuth.RefreshToken)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to decrypt refresh token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return component.Authentication{}, err
 	}
 
 	token, err := s.oauthClient.Refresh(ctx, refreshToken)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to refresh OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return component.Authentication{}, err
 	}
 
 	refreshedToken, err := s.oauthConverter.Convert(token)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to convert refreshed OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return component.Authentication{}, err
 	}
 
 	updatedAuth, err := s.createEncryptedAuth(refreshedToken)
 	if err != nil {
+		s.logger.Error(ctx, "Failed to encrypt refreshed OAuth token", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return component.Authentication{}, err
 	}
 
 	if _, err = s.storageService.Update(ctx, key, updatedAuth); err != nil {
+		s.logger.Error(ctx, "Failed to update OAuth token in storage", service.Fields{
+			"error":  err.Error(),
+			"teamID": teamID,
+			"userID": userID,
+		})
 		return component.Authentication{}, err
 	}
 
+	s.logger.Info(ctx, "Successfully refreshed and updated OAuth token", service.Fields{
+		"teamID": teamID,
+		"userID": userID,
+	})
 	return refreshedToken, nil
 }

@@ -28,20 +28,22 @@ type fileConversionController struct {
 func NewFileConversionController(
 	config *config.Config,
 	miroClient miro.Client,
+	jwtService crypto.Signer,
 	builderService document.BuilderService,
 	oauthService oauthService.OAuthService[miro.AuthenticationResponse],
 	settingsService settings.SettingsService,
-	jwtService crypto.Signer,
+	translationService service.TranslationProvider,
 	logger service.Logger,
 ) common.Handler {
 	controller := &fileConversionController{
 		BaseController: base.NewBaseController(
 			config,
 			miroClient,
+			jwtService,
 			builderService,
 			oauthService,
 			settingsService,
-			jwtService,
+			translationService,
 			logger,
 		),
 	}
@@ -59,11 +61,11 @@ func (c *fileConversionController) handleGet(ctx echo.Context) error {
 		}
 
 		if boardAuth == nil {
-			return c.HandleError(ctx, fmt.Errorf("board authentication is nil"), http.StatusInternalServerError, "invalid board authentication")
+			return c.HandleError(ctx, ErrInvalidBoardAuthentication, http.StatusInternalServerError, ErrInvalidBoardAuthentication.Error())
 		}
 
 		if boardAuth.Authentication == nil {
-			return c.HandleError(ctx, fmt.Errorf("authentication data is nil"), http.StatusInternalServerError, "missing authentication data")
+			return c.HandleError(ctx, ErrMissingAuthenticationData, http.StatusInternalServerError, ErrMissingAuthenticationData.Error())
 		}
 
 		if fid, ferr := c.GetQueryParam(ctx, "fid"); ferr == nil {
@@ -78,17 +80,17 @@ func (c *fileConversionController) handleGet(ctx echo.Context) error {
 			})
 
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusInternalServerError, "failed to fetch miro file")
+				return c.HandleError(ctx, err, http.StatusInternalServerError, ErrFailedToFetchMiroFile.Error())
 			}
 
 			token, err := c.ExtractUserToken(ctx)
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusForbidden, "failed to extract token")
+				return c.HandleError(ctx, err, http.StatusForbidden, ErrFailedToExtractToken.Error())
 			}
 
 			settings, err := c.SettingsService.Find(tctx, token.Team, boardAuth.BoardID)
 			if err != nil {
-				return c.HandleError(ctx, err, http.StatusBadRequest, "failed to fetch settings")
+				return c.HandleError(ctx, err, http.StatusBadRequest, ErrFailedToFetchSettings.Error())
 			}
 
 			address := settings.Address
@@ -101,7 +103,7 @@ func (c *fileConversionController) handleGet(ctx echo.Context) error {
 			fileExt := path.Ext(file.Data.Title)
 			convReq := convertClaims{
 				Async:      false,
-				FileType:   string(toDocumentType(fileExt)),
+				FileType:   string(common.ToDocumentType(fileExt)),
 				Key:        fmt.Sprintf("%x", md5.Sum([]byte(file.Data.DocumentURL))),
 				OutputType: "pdf",
 				Title:      file.Data.Title,

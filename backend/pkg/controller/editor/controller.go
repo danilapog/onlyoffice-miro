@@ -3,7 +3,6 @@ package editor
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,20 +28,22 @@ type editorController struct {
 func NewEditorController(
 	config *config.Config,
 	miroClient miro.Client,
+	jwtService crypto.Signer,
 	builderService document.BuilderService,
 	oauthService oauthService.OAuthService[miro.AuthenticationResponse],
 	settingsService settings.SettingsService,
-	jwtService crypto.Signer,
+	translationService service.TranslationProvider,
 	logger service.Logger,
 ) common.Handler {
 	controller := &editorController{
 		BaseController: base.NewBaseController(
 			config,
 			miroClient,
+			jwtService,
 			builderService,
 			oauthService,
 			settingsService,
-			jwtService,
+			translationService,
 			logger,
 		),
 	}
@@ -145,7 +146,7 @@ func (c *editorController) resolveServerSettings(settings *component.Settings) (
 	}
 
 	if address == "" || secret == "" {
-		return "", "", errors.New("please make sure you have configured the document server")
+		return "", "", base.ErrSettingsNotConfigured
 	}
 
 	return address, secret, nil
@@ -174,13 +175,11 @@ func (c *editorController) buildEditorConfig(
 	return config, nil
 }
 
-// TODO: Refactor, move to commons, Add translations
 func (c *editorController) handleGet(ctx echo.Context) error {
 	return c.ExecuteWithTimeout(ctx, 3*time.Second, func(tctx context.Context) error {
-		handleRequestError := func(err error, message, lang string) error {
+		handleRequestError := func(err error, message string) error {
 			if err != nil {
 				return ctx.Render(http.StatusOK, "unauthorized", map[string]string{
-					"language":           lang,
 					"authorizationError": message,
 				})
 			}
@@ -189,34 +188,34 @@ func (c *editorController) handleGet(ctx echo.Context) error {
 		}
 
 		params, err := c.extractAndValidateParams(ctx)
-		if err := handleRequestError(err, "failed to extract parameters", "en"); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, "en", "editor.errors.unauthorized")); err != nil {
 			return err
 		}
 
 		settings, auth, err := c.FetchAuthenticationWithSettings(tctx, params.uid, params.tid, params.bid)
-		if err := handleRequestError(err, "failed to fetch required data", params.lang); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_required_data")); err != nil {
 			return err
 		}
 
 		address, secret, err := c.resolveServerSettings(settings)
-		if err := handleRequestError(err, "invalid configuration", params.lang); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.invalid_configuration")); err != nil {
 			return err
 		}
 
 		user, file, err := c.fetchMiroData(tctx, params, auth.AccessToken)
-		if err := handleRequestError(err, "failed to fetch Miro data", params.lang); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.fetch_miro_data")); err != nil {
 			return err
 		}
 
 		user.Lang = params.lang
 		callbackURL := buildCallbackURL(c.Config.Server.CallbackURL, params.fid, params.uid, params.tid, params.bid)
 		config, err := c.buildEditorConfig(tctx, callbackURL, params.bid, user, file, secret)
-		if err := handleRequestError(err, "failed to build editor configuration", params.lang); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.build_editor_configuration")); err != nil {
 			return err
 		}
 
 		configJSON, err := json.Marshal(config)
-		if err := handleRequestError(err, "failed to encode configuration", params.lang); err != nil {
+		if err := handleRequestError(err, c.TranslationService.Translate(tctx, params.lang, "editor.errors.encode_configuration")); err != nil {
 			return err
 		}
 

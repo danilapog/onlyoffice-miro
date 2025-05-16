@@ -11,19 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func toDocumentType(ftype string) miro.DocumentType {
-	switch ftype {
-	case string(miro.DOCX):
-		return miro.DOCX
-	case string(miro.PPTX):
-		return miro.PPTX
-	case string(miro.XLSX):
-		return miro.XLSX
-	default:
-		return miro.DOCX
-	}
-}
-
 func PrepareRequest(
 	ctx echo.Context,
 	tctx context.Context,

@@ -22,26 +22,26 @@ import (
 type callbackController struct {
 	config          *config.Config
 	miroClient      miro.Client
+	jwtService      crypto.Signer
 	oauthService    oauth.OAuthService[miro.AuthenticationResponse]
 	settingsService settings.SettingsService
-	jwtService      crypto.Signer
 	logger          service.Logger
 }
 
 func NewCallbackController(
 	config *config.Config,
 	miroClient miro.Client,
+	jwtService crypto.Signer,
 	oauthService oauth.OAuthService[miro.AuthenticationResponse],
 	settingsService settings.SettingsService,
-	jwtService crypto.Signer,
 	logger service.Logger,
 ) common.Handler {
 	controller := &callbackController{
 		config:          config,
-		oauthService:    oauthService,
 		miroClient:      miroClient,
-		settingsService: settingsService,
 		jwtService:      jwtService,
+		oauthService:    oauthService,
+		settingsService: settingsService,
 		logger:          logger,
 	}
 
@@ -119,33 +119,45 @@ func (c *callbackController) handlePost(ctx echo.Context) error {
 
 	params, err := c.extractParams(ctx)
 	if err != nil {
-		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "failed to extract query parameters", err)
+		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "Failed to extract query parameters", err)
 	}
 
 	var body callbackRequest
 	if err := json.NewDecoder(ctx.Request().Body).Decode(&body); err != nil {
-		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "failed to decode request body", err)
+		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "Failed to decode request body", err)
 	}
 
 	if err := body.Validate(); err != nil {
-		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "failed to validate request body", err)
+		return c.logErrorAndRespond(ctx, http.StatusBadRequest, "Failed to validate request body", err)
 	}
 
 	if body.Status == 2 {
+		c.logger.Debug(ctx.Request().Context(), "Processing callback with save status", nil)
 		if body.Token == "" {
-			c.logger.Debug(ctx.Request().Context(), "failed to extract token from request body", nil)
+			c.logger.Error(ctx.Request().Context(), "Failed to extract token from request body", nil)
 			return ctx.JSON(http.StatusBadRequest, common.ErrorResponse{Error: callbackErrorCodeFailure})
 		}
 
 		auth, settings, err := c.fetchAuthenticationAndSettings(tctx, params)
 		if err != nil {
-			return c.logErrorAndRespond(ctx, http.StatusBadRequest, "failed to extract authentication and settings", err)
+			return c.logErrorAndRespond(ctx, http.StatusBadRequest, "Failed to extract authentication and settings", err)
 		}
 
+		c.logger.Debug(ctx.Request().Context(), "Successfully fetched authentication and settings", nil)
+
 		secret := c.getSecretFromSettings(settings)
+		c.logger.Debug(ctx.Request().Context(), "Validating token", nil)
 		if err = c.jwtService.ValidateTarget(body.Token, []byte(secret), &body); err != nil {
-			return c.logErrorAndRespond(ctx, http.StatusUnauthorized, "failed to validate and map token", err)
+			return c.logErrorAndRespond(ctx, http.StatusUnauthorized, "Failed to validate and map token", err)
 		}
+
+		c.logger.Debug(ctx.Request().Context(), "Token validated successfully", nil)
+
+		c.logger.Info(ctx.Request().Context(), "Uploading file to Miro", service.Fields{
+			"board_id": params.BID,
+			"file_id":  params.FID,
+			"file_url": body.Url,
+		})
 
 		if _, err := c.miroClient.UploadFile(tctx, miro.UploadFileRequest{
 			BoardID: params.BID,
@@ -153,23 +165,32 @@ func (c *callbackController) handlePost(ctx echo.Context) error {
 			FileURL: body.Url,
 			Token:   auth.AccessToken,
 		}); err != nil {
-			c.logger.Error(ctx.Request().Context(), "failed to upload file",
+			c.logger.Error(ctx.Request().Context(), "Failed to upload file",
 				service.Fields{
 					"error":    err.Error(),
 					"board_id": params.BID,
 					"file_id":  params.FID,
+					"file_url": body.Url,
 				},
 			)
 			return ctx.JSON(http.StatusInternalServerError, common.ErrorResponse{Error: callbackErrorCodeFailure})
 		}
 
-		c.logger.Info(ctx.Request().Context(), "file uploaded successfully",
+		c.logger.Info(ctx.Request().Context(), "File uploaded successfully",
 			service.Fields{
 				"board_id": params.BID,
 				"file_id":  params.FID,
 			},
 		)
+	} else {
+		c.logger.Info(ctx.Request().Context(), "Skipping file upload for non-save callback",
+			service.Fields{
+				"status": body.Status,
+				"bid":    params.BID,
+				"fid":    params.FID,
+			})
 	}
 
+	c.logger.Debug(ctx.Request().Context(), "Callback processing complete", nil)
 	return ctx.JSON(http.StatusOK, common.ErrorResponse{Error: callbackErrorCodeSuccess})
 }

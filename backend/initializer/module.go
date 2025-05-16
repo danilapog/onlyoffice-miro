@@ -89,7 +89,7 @@ func NewCache(config *config.Config, logger service.Logger) (service.Cache, erro
 
 // NewDatabase initializes the database connection pool and storage services.
 // It handles database migration and creates storage repositories.
-func NewDatabase(config *config.Config) (*Database, error) {
+func NewDatabase(config *config.Config, logger service.Logger) (*Database, error) {
 	pool, err := pg.NewPostgresPool(config.Database.DatasourceURL())
 	if err != nil {
 		return nil, err
@@ -105,12 +105,12 @@ func NewDatabase(config *config.Config) (*Database, error) {
 		return nil, err
 	}
 
-	authStorage, err := pg.NewPostgresStorage(pool, processor.NewAuthenticationProcessor())
+	authStorage, err := pg.NewPostgresStorage(pool, processor.NewAuthenticationProcessor(), logger)
 	if err != nil {
 		return nil, err
 	}
 
-	settingsStorage, err := pg.NewPostgresStorage(pool, processor.NewSettingsProcessor())
+	settingsStorage, err := pg.NewPostgresStorage(pool, processor.NewSettingsProcessor(), logger)
 	if err != nil {
 		return nil, err
 	}
@@ -128,16 +128,16 @@ func NewDatabase(config *config.Config) (*Database, error) {
 
 // NewClients initializes external API clients.
 // These are used to communicate with external services like Miro.
-func NewClients(config *config.Config) (*Clients, error) {
-	oauthClient, err := oauth.NewOAuthClient[miro.AuthenticationResponse](config.OAuth)
+func NewClients(config *config.Config, logger service.Logger) (*Clients, error) {
+	oauthClient, err := oauth.NewOAuthClient[miro.AuthenticationResponse](config.OAuth, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Clients{
+		DocServer:   docserver.NewClient(logger),
+		MiroClient:  miro.NewMiroClient(config.Miro, logger),
 		OAuthClient: oauthClient,
-		MiroClient:  miro.NewMiroClient(config.Miro),
-		DocServer:   docserver.NewClient(),
 	}, nil
 }
 
@@ -151,8 +151,8 @@ func NewServices(
 	config *config.Config,
 	database *Database,
 	clients *Clients,
-	logger service.Logger,
 	cache service.Cache,
+	logger service.Logger,
 ) (*Services, error) {
 	mapper := NewAuthenticationMapper()
 	cipher := crypto.NewAESCipher([]byte(config.OAuth.ClientSecret))
@@ -169,9 +169,10 @@ func NewServices(
 	}
 
 	builder := document.NewBuilderService(
-		document.NewModificationKeyGenerator(),
-		document.NewJwtSignatureGenerator(),
+		document.NewModificationKeyGenerator(logger),
+		document.NewJwtSignatureGenerator(logger),
 		formatManager,
+		logger,
 	)
 
 	authService := oauthService.NewOAuthService(
@@ -179,19 +180,20 @@ func NewServices(
 		clients.OAuthClient,
 		mapper,
 		database.AuthStorage,
+		logger,
 	)
 
 	settingsService := settingsService.NewSettingsService(
 		config,
+		clients.DocServer,
+		cache,
 		cipher,
 		jwt,
 		database.SettingsStorage,
-		cache,
-		clients.DocServer,
 		logger,
 	)
 
-	translator, err := translation.NewTranslation("en")
+	translator, err := translation.NewTranslation("en", logger)
 	if err != nil {
 		return nil, err
 	}
@@ -222,10 +224,11 @@ func NewControllers(
 	editor := editor.NewEditorController(
 		config,
 		clients.MiroClient,
+		services.JwtService,
 		services.Builder,
 		services.AuthService,
 		services.SettingsService,
-		services.JwtService,
+		services.Translator,
 		logger,
 	)
 
@@ -239,9 +242,9 @@ func NewControllers(
 	callback := callback.NewCallbackController(
 		config,
 		clients.MiroClient,
+		services.JwtService,
 		services.AuthService,
 		services.SettingsService,
-		services.JwtService,
 		logger,
 	)
 
@@ -256,20 +259,22 @@ func NewControllers(
 	fileManagement := file.NewFileManagementController(
 		config,
 		clients.MiroClient,
+		services.JwtService,
 		services.Builder,
 		services.AuthService,
 		services.SettingsService,
-		services.JwtService,
+		services.Translator,
 		logger,
 	)
 
 	fileConversion := file.NewFileConversionController(
 		config,
 		clients.MiroClient,
+		services.JwtService,
 		services.Builder,
 		services.AuthService,
 		services.SettingsService,
-		services.JwtService,
+		services.Translator,
 		logger,
 	)
 
@@ -316,13 +321,13 @@ func NewRouter(
 // It registers lifecycle hooks to handle graceful startup and shutdown.
 func NewApp(
 	lifecycle fx.Lifecycle,
+	config *config.Config,
 	echo *echo.Echo,
 	router *Router,
 	database *Database,
 	services *Services,
-	controllers *Controllers,
 	clients *Clients,
-	config *config.Config,
+	controllers *Controllers,
 	logger service.Logger,
 ) *App {
 	app := &App{

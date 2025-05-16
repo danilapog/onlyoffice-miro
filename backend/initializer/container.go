@@ -37,16 +37,16 @@ func (a *App) SetupRoutes(logger service.Logger) {
 
 // Database holds all database-related components and repositories.
 type Database struct {
-	AuthStorage     service.Storage[core.AuthCompositeKey, component.Authentication]
 	Pool            *pgxpool.Pool
+	AuthStorage     service.Storage[core.AuthCompositeKey, component.Authentication]
 	SettingsStorage service.Storage[core.SettingsCompositeKey, component.Settings]
 }
 
 // Clients contains all external API client instances.
 type Clients struct {
-	OAuthClient oauth.OAuthClient[miro.AuthenticationResponse]
-	MiroClient  miro.Client
 	DocServer   docserver.Client
+	MiroClient  miro.Client
+	OAuthClient oauth.OAuthClient[miro.AuthenticationResponse]
 }
 
 // Services contains all application service instances.

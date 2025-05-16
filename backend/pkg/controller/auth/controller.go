@@ -39,20 +39,29 @@ func NewAuthController(
 		logger:       logger,
 	}
 
+	logger.Info(context.Background(), "Auth controller initialized", service.Fields{
+		"redirect_uri": config.OAuth.RedirectURI,
+		"client_id":    config.OAuth.ClientID,
+	})
+
 	return common.NewHandler(map[common.HTTPMethod]echo.HandlerFunc{
 		common.MethodGet: controller.handleGet,
 	})
 }
 
 func (c *authController) extractParams(ctx echo.Context) (authQueryParams, error) {
+	c.logger.Debug(ctx.Request().Context(), "Extractig auth query params")
+
 	params := authQueryParams{
 		Code: ctx.QueryParam("code"),
 	}
 
 	if params.Code == "" {
+		c.logger.Warn(ctx.Request().Context(), "Missing authorization code")
 		return params, fmt.Errorf("missing authorization code")
 	}
 
+	c.logger.Debug(ctx.Request().Context(), "Successfully extracted auth code")
 	return params, nil
 }
 
@@ -71,19 +80,36 @@ func (c *authController) handleError(ctx echo.Context, msg string, err error, ar
 }
 
 func (c *authController) handleGet(ctx echo.Context) error {
+	requestID := ctx.Response().Header().Get(echo.HeaderXRequestID)
+	c.logger.Info(ctx.Request().Context(), "Handling auth request", service.Fields{
+		"method":      ctx.Request().Method,
+		"remote_addr": ctx.Request().RemoteAddr,
+		"request_id":  requestID,
+		"user_agent":  ctx.Request().UserAgent(),
+	})
+
 	tctx, cancel := context.WithTimeout(ctx.Request().Context(), 3*time.Second)
 	defer cancel()
 
 	params, err := c.extractParams(ctx)
 	if err != nil {
-		return c.handleError(ctx, "failed to extract authorization code", err)
+		return c.handleError(ctx, "Failed to extract authorization code", err)
 	}
 
+	c.logger.Info(tctx, "Exchanging authorization code for token")
 	token, err := c.oauthClient.Exchange(tctx, params.Code)
 	if err != nil {
-		return c.handleError(ctx, "failed to exchange authorization code", err,
+		return c.handleError(ctx, "Failed to exchange authorization code", err,
 			"code", params.Code)
 	}
+
+	c.logger.Debug(tctx, "Token exchange successful", service.Fields{
+		"user_id":    token.UserID,
+		"team_id":    token.TeamID,
+		"expires_in": token.ExpiresIn,
+		"token_type": token.TokenType,
+		"scope":      token.Scope,
+	})
 
 	expiresAt := time.Now().Add(time.Second * time.Duration(token.ExpiresIn-10)).Unix()
 	auth := component.Authentication{
@@ -94,16 +120,30 @@ func (c *authController) handleGet(ctx echo.Context) error {
 		Scope:        token.Scope,
 	}
 
+	c.logger.Info(tctx, "Saving authentication token", service.Fields{
+		"user_id":    token.UserID,
+		"team_id":    token.TeamID,
+		"expires_at": expiresAt,
+		"scope":      token.Scope,
+	})
+
 	if err := c.oauthService.Save(tctx, token.TeamID, token.UserID, auth); err != nil {
-		return c.handleError(ctx, "failed to persist authentication token", err,
+		return c.handleError(ctx, "Failed to persist authentication token", err,
 			"user_id", token.UserID,
 			"team_id", token.TeamID)
 	}
 
-	c.logger.Info(ctx.Request().Context(), "successfully authenticated user",
+	c.logger.Info(ctx.Request().Context(), "Successfully authenticated user",
 		service.Fields{
 			"user_id": token.UserID,
 			"team_id": token.TeamID,
+		},
+	)
+
+	c.logger.Debug(ctx.Request().Context(), "Redirecting to Miro application",
+		service.Fields{
+			"redirect_url": miroApplicationBase,
+			"status_code":  http.StatusPermanentRedirect,
 		},
 	)
 

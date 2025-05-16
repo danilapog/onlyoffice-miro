@@ -23,30 +23,30 @@ const defaultCacheExpiration = 5 * time.Minute
 
 type settingsService struct {
 	config          *config.Config
+	docServerClient docserver.Client
+	cache           service.Cache
 	cipher          crypto.Cipher
 	jwtService      crypto.Signer
 	storageService  service.Storage[core.SettingsCompositeKey, component.Settings]
-	cache           service.Cache
-	docServerClient docserver.Client
 	logger          service.Logger
 }
 
 func NewSettingsService(
 	config *config.Config,
+	docServerClient docserver.Client,
+	cache service.Cache,
 	cipher crypto.Cipher,
 	jwtService crypto.Signer,
 	storageService service.Storage[core.SettingsCompositeKey, component.Settings],
-	cache service.Cache,
-	docServerClient docserver.Client,
 	logger service.Logger,
 ) SettingsService {
 	return &settingsService{
 		config:          config,
+		docServerClient: docServerClient,
+		cache:           cache,
 		cipher:          cipher,
 		jwtService:      jwtService,
 		storageService:  storageService,
-		cache:           cache,
-		docServerClient: docServerClient,
 		logger:          logger,
 	}
 }
@@ -87,7 +87,12 @@ func (s *settingsService) encryptSecret(secret string) (string, error) {
 		return "", nil
 	}
 
-	return s.cipher.Encrypt(secret)
+	encrypted, err := s.cipher.Encrypt(secret)
+	if err != nil {
+		return "", fmt.Errorf("failed to encrypt secret: %w", err)
+	}
+
+	return encrypted, nil
 }
 
 func (s *settingsService) decryptSecret(encryptedSecret string) (string, error) {
@@ -95,7 +100,12 @@ func (s *settingsService) decryptSecret(encryptedSecret string) (string, error) 
 		return "", nil
 	}
 
-	return s.cipher.Decrypt(encryptedSecret)
+	decrypted, err := s.cipher.Decrypt(encryptedSecret)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt secret: %w", err)
+	}
+
+	return decrypted, nil
 }
 
 func (s *settingsService) createDemoSettings(teamID string, existingStarted *time.Time) component.Demo {
@@ -164,15 +174,18 @@ func (s *settingsService) Save(ctx context.Context, teamID, boardID string, opts
 	}
 
 	if err := settings.Validate(); err != nil {
+		s.logEvent(ctx, config.Error, "Invalid settings options", teamID, boardID, err)
 		return err
 	}
 
 	compositeKey := s.createCompositeKey(teamID, boardID)
 	existingSettings, err := s.storageService.Find(ctx, compositeKey)
 	if err != nil && !errors.Is(err, pg.ErrNoRowsAffected) {
+		s.logEvent(ctx, config.Error, "Failed to retrieve existing settings", teamID, boardID, err)
 		return err
 	}
 
+	s.logEvent(ctx, config.Debug, "Validating document server", teamID, boardID, nil)
 	if settings.Address != "" && settings.Header != "" && settings.Secret != "" {
 		token, err := s.jwtService.Create(jwt.MapClaims{
 			"c":   "version",
@@ -181,34 +194,42 @@ func (s *settingsService) Save(ctx context.Context, teamID, boardID string, opts
 		}, []byte(settings.Secret))
 
 		if err != nil {
+			s.logEvent(ctx, config.Error, "Failed to create JWT token", teamID, boardID, err)
 			return err
 		}
 
 		response, err := s.docServerClient.GetServerVersion(ctx, settings.Address, docserver.WithHeader(settings.Header), docserver.WithToken(token))
 		if err != nil {
+			s.logEvent(ctx, config.Error, "Failed to connect to document server", teamID, boardID, err)
 			return err
 		}
 
 		if response.Error != 0 {
-			return fmt.Errorf("received non-zero error code from docserver: %d", response.Error)
+			err := fmt.Errorf("received non-zero error code from docserver: %d", response.Error)
+			s.logEvent(ctx, config.Error, "Document server returned error", teamID, boardID, err)
+			return err
 		}
 
 		if err := validateDocServerVersion(response.Version); err != nil {
+			s.logEvent(ctx, config.Error, "Unsupported document server version", teamID, boardID, err)
 			return err
 		}
+		s.logEvent(ctx, config.Debug, fmt.Sprintf("Valid document server detected, version: %s", response.Version), teamID, boardID, nil)
 	}
 
 	newSettings, err := s.buildNewSettings(teamID, settings, existingSettings)
 	if err != nil {
-		return err
-	}
-
-	if _, err := s.storageService.Insert(ctx, compositeKey, newSettings); err != nil {
+		s.logEvent(ctx, config.Error, "Failed to build new settings", teamID, boardID, err)
 		return err
 	}
 
 	s.invalidateCache(ctx, teamID, boardID)
+	if _, err := s.storageService.Insert(ctx, compositeKey, newSettings); err != nil {
+		s.logEvent(ctx, config.Error, "Failed to store settings", teamID, boardID, err)
+		return err
+	}
 
+	s.logEvent(ctx, config.Debug, "Settings saved successfully", teamID, boardID, nil)
 	return nil
 }
 
@@ -251,6 +272,7 @@ func (s *settingsService) buildNewSettings(teamID string, opts *SaveOptions, exi
 }
 
 func (s *settingsService) Find(ctx context.Context, teamID, boardID string) (component.Settings, error) {
+	s.logEvent(ctx, config.Debug, "Looking up settings", teamID, boardID, nil)
 	settings, found, err := s.getFromCache(ctx, teamID, boardID)
 	if err != nil {
 		s.logEvent(ctx, config.Warn, "Error processing cached settings", teamID, boardID, err)
@@ -260,6 +282,7 @@ func (s *settingsService) Find(ctx context.Context, teamID, boardID string) (com
 		return settings, nil
 	}
 
+	s.logEvent(ctx, config.Debug, "Settings not found in cache, checking storage", teamID, boardID, nil)
 	return s.getFromStorage(ctx, teamID, boardID)
 }
 
@@ -302,11 +325,14 @@ func (s *settingsService) getFromStorage(ctx context.Context, teamID, boardID st
 
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRowsAffected) {
+			s.logEvent(ctx, config.Debug, "No settings found in storage", teamID, boardID, nil)
 			return component.Settings{}, nil
 		}
+		s.logEvent(ctx, config.Error, "Failed to retrieve settings from storage", teamID, boardID, err)
 		return component.Settings{}, err
 	}
 
+	s.logEvent(ctx, config.Debug, "Settings retrieved from storage", teamID, boardID, nil)
 	s.cacheSettings(ctx, teamID, boardID, settings)
 
 	if settings.Demo.Enabled && (settings.Address == "" || settings.Header == "" || settings.Secret == "") {
@@ -316,6 +342,7 @@ func (s *settingsService) getFromStorage(ctx context.Context, teamID, boardID st
 	if settings.Secret != "" {
 		decSecret, err := s.decryptSecret(settings.Secret)
 		if err != nil {
+			s.logEvent(ctx, config.Error, "Failed to decrypt secret", teamID, boardID, err)
 			return settings, err
 		}
 		settings.Secret = decSecret

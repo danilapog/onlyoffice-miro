@@ -11,21 +11,6 @@ type AuthenticationResponse struct {
 	Scope        string `json:"scope"`
 }
 
-type GenericFileResponse struct {
-	ID string `json:"id"`
-}
-
-type FileInfoResponse struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Data struct {
-		Title       string `json:"title"`
-		DocumentURL string `json:"documentUrl"`
-	} `json:"data"`
-	CreatedAt  string `json:"createdAt"`
-	ModifiedAt string `json:"modifiedAt"`
-}
-
 type BoardMemberResponse struct {
 	MemberID   string `json:"id"`
 	MemberName string `json:"name"`
@@ -49,10 +34,6 @@ func (b *BoardMemberResponse) Language() string {
 	return b.Lang
 }
 
-type FileLocationResponse struct {
-	URL string `json:"url"`
-}
-
 type FileCreatedResponse struct {
 	ID         string `json:"id"`
 	CreatedAt  string `json:"createdAt"`
@@ -62,10 +43,29 @@ type FileCreatedResponse struct {
 	} `json:"links"`
 }
 
+type FileInfoResponse struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Data struct {
+		Title       string `json:"title"`
+		DocumentURL string `json:"documentUrl"`
+	} `json:"data"`
+	CreatedAt  string `json:"createdAt"`
+	ModifiedAt string `json:"modifiedAt"`
+}
+
+type FileLocationResponse struct {
+	URL string `json:"url"`
+}
+
 type FilesInfoResponse struct {
 	Size   int                `json:"size"`
 	Limit  int                `json:"limit"`
 	Total  int                `json:"total"`
 	Data   []FileInfoResponse `json:"data"`
 	Cursor string             `json:"cursor,omitempty"`
+}
+
+type GenericFileResponse struct {
+	ID string `json:"id"`
 }
