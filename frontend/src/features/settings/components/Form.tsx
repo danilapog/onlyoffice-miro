@@ -218,7 +218,7 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
               />
             </div>
 
-            {isDemoExpired && <Banner />}
+            <Banner />
 
             {!isDemoExpired && (
               <div className="form__checkbox-container">
