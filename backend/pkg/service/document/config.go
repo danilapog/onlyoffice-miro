@@ -51,6 +51,7 @@ type Permissions struct {
 	ModifyFilter            bool `json:"modifyFilter"`
 	Print                   bool `json:"print"`
 	Review                  bool `json:"review"`
+	Protect                 bool `json:"protect,omitempty"`
 }
 
 type Document struct {
