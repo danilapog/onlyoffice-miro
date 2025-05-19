@@ -30,11 +30,15 @@ const ManagerPage = () => {
     authError,
     serverConfigError,
     initialized,
+    refreshDocuments,
   } = useFilesStore();
-
   const isInitialLoading = loading && !initialized;
 
   if (serverConfigError && admin) return <SettingsPage forceDisableBack />;
+
+  const handleReload = async () => {
+    await refreshDocuments();
+  };
 
   const renderContent = () => {
     if (authError) return <Installation />;
@@ -71,7 +75,9 @@ const ManagerPage = () => {
           : ''
       }
       footerText={t('manager.footer')}
+      reload={true}
       settings={!serverConfigError}
+      onReload={handleReload}
     >
       <div className="manager-container">
         <div className="manager-container_shifted">

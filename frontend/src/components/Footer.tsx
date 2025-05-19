@@ -4,8 +4,10 @@ import '@components/footer.css';
 
 interface FooterProps extends React.ButtonHTMLAttributes<HTMLDivElement> {
   text: string;
+  reload?: boolean;
   settings?: boolean;
   help?: boolean;
+  onReloadClick?: () => void;
   onSettingsClick?: () => void;
   onHelpClick?: () => void;
 }
@@ -16,8 +18,10 @@ const Footer: React.FC<FooterProps> = forwardRef<HTMLDivElement, FooterProps>(
       id,
       text,
       disabled,
+      reload = false,
       settings = true,
       help = true,
+      onReloadClick,
       onSettingsClick,
       onHelpClick,
       ...props
@@ -31,6 +35,16 @@ const Footer: React.FC<FooterProps> = forwardRef<HTMLDivElement, FooterProps>(
         <span className="footer-container__title">
           {text || 'Developed by ONLYOFFICE'}
         </span>
+        {reload && (
+          <button
+            className="footer-container__button"
+            onClick={onReloadClick}
+            aria-label="Reload"
+            type="button"
+          >
+            <div role="img" className="footer-container__button__reload" />
+          </button>
+        )}
         {settings && (
           <button
             className="footer-container__button"

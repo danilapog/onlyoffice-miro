@@ -73,7 +73,21 @@
   transition: background-color 0.3s ease;
 }
 
+.footer-container__button__reload {
+  width: 1rem;
+  height: 1rem;
+
+  mask-image: url('/reload.svg');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  background-color: #09090966;
+
+  transition: background-color 0.3s ease;
+}
+
 .footer-container__button:hover .footer-container__button__settings,
-.footer-container__button:hover .footer-container__button__help {
+.footer-container__button:hover .footer-container__button__help,
+.footer-container__button:hover .footer-container__button__reload {
   background-color: #4262FF;
 }

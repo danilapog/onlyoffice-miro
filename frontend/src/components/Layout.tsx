@@ -12,8 +12,10 @@ interface LayoutProps {
   subtitle?: string;
   footerText: string;
   backTo?: string;
+  reload?: boolean;
   settings?: boolean;
   help?: boolean;
+  onReload?: () => void;
   onSettings?: () => void;
   onHelp?: () => void;
   children: ReactNode;
@@ -24,8 +26,10 @@ const Layout: React.FC<LayoutProps> = ({
   subtitle,
   footerText,
   backTo,
+  reload,
   settings,
   help,
+  onReload,
   onSettings,
   onHelp = () => window.open('https://onlyoffice.com', '_blank'),
   children,
@@ -65,8 +69,10 @@ const Layout: React.FC<LayoutProps> = ({
       <div className="layout-footer">
         <Footer
           text={footerText}
+          reload={reload}
           settings={showSettings}
           help={help}
+          onReloadClick={onReload}
           onSettingsClick={handleSettings}
           onHelpClick={onHelp}
         />
