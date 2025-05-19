@@ -20,10 +20,10 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(
         <div className="banner__content">
           <div className="banner__content__info">
             <h3 className="banner__content__info__title">
-              {t('settings.banner.title')}
+              {t('features.settings.banner.title')}
             </h3>
             <p className="banner__content__info__description">
-              {t('settings.banner.description')}
+              {t('features.settings.banner.description')}
             </p>
           </div>
           <button
@@ -31,7 +31,7 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(
             className="banner__content__button"
             onClick={handleButtonClick}
           >
-            {t('settings.banner.button')}
+            {t('features.settings.banner.button')}
           </button>
         </div>
       </div>

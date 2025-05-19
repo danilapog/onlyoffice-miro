@@ -64,7 +64,9 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(
 
         if (events.length > 0) {
           await emitDocumentsAdded(events);
-          await emitNotification(t('notifications.documents_added'));
+          await emitNotification(
+            t('features.file.list.notifications.documents_added')
+          );
         }
       },
       [emitDocumentsAdded, emitNotification, t]
@@ -107,7 +109,9 @@ export const FilesList = forwardRef<HTMLDivElement, FilesListProps>(
     );
 
     const listenDocumentsAdded = useCallback(async () => {
-      await emitNotification(t('notifications.documents_added'));
+      await emitNotification(
+        t('features.file.list.notifications.documents_added')
+      );
     }, [emitNotification, t]);
 
     const listenDocumentsDeleted = useCallback(

@@ -1,3 +1,4 @@
+/* eslint-disable react/button-has-type */
 import React, { forwardRef } from 'react';
 
 import '@components/button.css';
@@ -35,7 +36,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         onClick={handleClick}
         className={`generic-button ${variant === 'primary' ? 'primary' : ''} ${className}`}
-        type="button"
+        type={type || 'button'}
         {...props}
       >
         {name}

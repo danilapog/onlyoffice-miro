@@ -53,13 +53,18 @@ const ManagerPage = () => {
       );
 
     if (documents.length === 0)
-      return <Empty title={t('empty.title')} subtitle={t('empty.subtitle')} />;
+      return (
+        <Empty
+          title={t('pages.manager.empty.title')}
+          subtitle={t('pages.manager.empty.subtitle')}
+        />
+      );
 
     if (searchQuery !== '' && filteredDocuments.length === 0)
       return (
         <Empty
-          title={t('empty.search_title')}
-          subtitle={t('empty.search_subtitle')}
+          title={t('pages.manager.empty.search_title')}
+          subtitle={t('pages.manager.empty.search_subtitle')}
         />
       );
 
@@ -68,14 +73,14 @@ const ManagerPage = () => {
 
   return (
     <Layout
-      title={serverConfigError ? '' : t('manager.title')}
+      title={serverConfigError ? '' : t('pages.manager.title')}
       subtitle={
         !authError && !serverConfigError && documents.length > 0
-          ? t('manager.subtitle')
+          ? t('pages.manager.subtitle')
           : ''
       }
-      footerText={t('manager.footer')}
-      reload={true}
+      footerText={t('pages.manager.footer')}
+      reload
       settings={!serverConfigError}
       onReload={handleReload}
     >
@@ -99,7 +104,7 @@ const ManagerPage = () => {
               onClick={(e) => isInitialLoading && e.preventDefault()}
             >
               <Button
-                name={t('manager.create')}
+                name={t('pages.manager.create')}
                 variant="primary"
                 disabled={isInitialLoading}
               />

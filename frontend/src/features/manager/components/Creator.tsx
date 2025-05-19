@@ -40,7 +40,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(
 
     useEffect(() => {
       if (!selectedName || selectedName.trim() === '')
-        setNameError(t('creation.errors.nameRequired'));
+        setNameError(t('features.manager.creation.errors.name_required'));
       else setNameError(undefined);
     }, [selectedName, t]);
 
@@ -48,7 +48,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(
       const supportedTypes = getSupportedTypes();
       return supportedTypes.map((type) => ({
         value: type,
-        label: t(`file.types.${type}`),
+        label: t(`features.manager.creation.file_types.${type}`),
       }));
     }, [getSupportedTypes, t]);
 
@@ -85,7 +85,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(
             <div className="creator-container__form">
               <div className="creator-container__form-group">
                 <Label className="creator-container__label" htmlFor="file-name">
-                  {t('creation.fileName')}
+                  {t('features.manager.creation.file_name')}
                   <span className="form-input__label_required">*</span>
                 </Label>
                 <FormInput
@@ -99,7 +99,7 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(
               </div>
               <div className="creator-container__form-group">
                 <Label className="creator-container__label" htmlFor="file-type">
-                  {t('creation.fileType')}
+                  {t('features.manager.creation.file_type')}
                 </Label>
                 <Select
                   options={typeOptions}
@@ -114,14 +114,18 @@ export const Creator = forwardRef<HTMLDivElement, CreatorProps>(
         </div>
         <div className="creator-container__button-container">
           <Button
-            name={loading ? t('creation.creating') : t('creation.create')}
+            name={
+              loading
+                ? t('features.manager.creation.creating')
+                : t('features.manager.creation.create')
+            }
             variant="primary"
             onClick={async () => {
               const result = await handleCreateFile();
               if (result) navigate('/', { state: { isBack: true } });
               else
                 await miro.board.notifications.showError(
-                  t('notifications.file_creation_failed')
+                  t('features.manager.creation.errors.file_creation_failed')
                 );
             }}
             disabled={loading || !formValid}

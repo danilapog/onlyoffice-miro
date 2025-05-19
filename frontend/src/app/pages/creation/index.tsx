@@ -11,9 +11,9 @@ const CreationPage: React.FC = () => {
   const { t } = useTranslation();
   return (
     <Layout
-      title={t('creation.title')}
-      subtitle={t('creation.subtitle')}
-      footerText={t('creation.footer')}
+      title={t('pages.creation.title')}
+      subtitle={t('pages.creation.subtitle')}
+      footerText={t('pages.creation.footer')}
       backTo="/"
     >
       <Creator />

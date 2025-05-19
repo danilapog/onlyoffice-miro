@@ -1,73 +1,89 @@
 {
-  "creation": {
-    "title": "Create new file ES",
-    "subtitle": "Enter file name and choose the format to create a new document ES",
-    "footer": "Developed by ONLYOFFICE ES",
-    "fileName": "File name ES",
-    "fileType": "File type ES",
-    "create": "Create ES",
-    "creating": "Creating... ES",
-    "errors": {
-      "nameRequired": "File name is required ES"
+  "pages": {
+    "creation": {
+      "title": "Create new file ES",
+      "subtitle": "Enter file name and choose the format to create a new document ES",
+      "footer": "Developed by ONLYOFFICE ES"
+    },
+    "manager": {
+      "empty": {
+        "title": "No docs here yet ES",
+        "subtitle": "Press create new document button ES",
+        "search_title": "No documents found ES",
+        "search_subtitle": "Please try a different search query ES"
+      },
+      "title": "File manager ES",
+      "subtitle": "Choose or create a document to edit it in Miro ES",
+      "footer": "Developed by ONLYOFFICE ES",
+      "create": "Create new file ES"
+    },
+    "settings": {
+      "title": "Configure ONLYOFFICE app settings ES",
+      "footer": "Developed by ONLYOFFICE ES"
     }
   },
-  "manager": {
-    "notfound": "Could not find any documents matching ES ",
-    "title": "File manager ES",
-    "subtitle": "Choose or create a document to edit it in Miro ES",
-    "footer": "Developed by ONLYOFFICE ES",
-    "create": "Create new file ES",
-    "auth_error": "Authorization error ES",
-    "auth_error_description": "Please install or reinstall the app ES",
-    "auth_error_button": "Reinstall ES",
-    "installation_error": "App Installation Required ES",
-    "installation_error_description": "Please install or reinstall the app to continue ES",
-    "installation_error_button": "Install ES",
-    "notconfigured_title": "Configuration required ES",
-    "notconfigured_message": "Please contact your administrator to configure the document server ES"
-  },
-  "settings": {
-    "title": "Configure ONLYOFFICE app settings ES",
-    "footer": "Developed by ONLYOFFICE ES",
-    "description": "The app which enables the users to edit office documents from Miro using ONLYOFFICE Document Server ES",
-    "address": "Document Server Address ES",
-    "secret": "JWT Secret ES",
-    "header": "JWT Header ES",
-    "banner": {
-      "title": "ONLYOFFICE Docs Cloud ES",
-      "description": "Easily launch the editors in the cloud without downloading and installation ES",
-      "button": "Get now ES"
+  "features": {
+    "file": {
+      "item": {
+        "navigate": "Navigate to ES",
+        "download": "Download as PDF ES",
+        "delete": "Delete ES"
+      },
+      "list": {
+        "notifications": {
+          "documents_added": "Please refresh ONLYOFFICE to see new documents ES"
+        }
+      }
     },
-    "demo": {
-      "title": "Connect to demo ONLYOFFICE Docs server ES",
-      "description": "This is a public test server, please do not use it for private data ES",
-      "started": "This demo will be available until {{date}} ES"
+    "manager": {
+      "installation": {
+        "error": "App Installation Required ES",
+        "description": "Please install or reinstall the app to continue ES",
+        "button": "Install ES"
+      },
+      "creation": {
+        "errors": {
+          "name_required": "File name is required ES",
+          "file_creation_failed": "Failed to create file ES"
+        },
+        "file_types": {
+          "docx": "Document ES",
+          "xlsx": "Spreadsheet ES",
+          "pptx": "Presentation ES"
+        },
+        "create": "Create ES",
+        "creating": "Creating... ES",
+        "file_name": "File name ES",
+        "file_type": "File type ES"
+      },
+      "notconfigured": {
+        "title": "Configuration required ES",
+        "message": "Please contact your administrator to configure the document server ES"
+      }
     },
-    "save": "Save ES",
-    "errors": {
-      "addressRequired": "Please enter a valid address ES",
-      "headerRequired": "Please enter a valid header ES",
-      "secretRequired": "Please enter a valid secret ES"
+    "settings": {
+      "banner": {
+        "title": "ONLYOFFICE Docs Cloud ES",
+        "description": "Easily launch the editors in the cloud without downloading and installation ES",
+        "button": "Get now ES"
+      },
+      "form": {
+        "description": "The app which enables the users to edit office documents from Miro using ONLYOFFICE Document Server ES",
+        "errors": {
+          "address_required": "Please enter a valid address ES",
+          "header_required": "Please enter a valid header ES",
+          "secret_required": "Please enter a valid secret ES"
+        },
+        "address": "Document Server Address ES",
+        "secret": "JWT Secret ES",
+        "header": "JWT Header ES",
+        "demo": {
+          "title": "Connect to demo ONLYOFFICE Docs server ES",
+          "description": "This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period. ES",
+          "started": "This demo will be available until {{date}} ES"
+        },
+        "save": "Save ES"
+      }
     }
-  },
-  "empty": {
-    "title": "No docs here yet ES",
-    "subtitle": "Press create new document button ES",
-    "search_title": "No documents found ES",
-    "search_subtitle": "Please try a different search query ES"
-  },
-  "file": {
-    "types": {
-      "docx": "Document ES",
-      "xlsx": "Spreadsheet ES",
-      "pptx": "Presentation ES"
-    },
-    "navigate": "Navigate to ES",
-    "download": "Download as PDF ES",
-    "delete": "Delete ES"
-  },
-  "notifications": {
-    "documents_added": "Please refresh ONLYOFFICE to see new documents ES",
-    "file_creation_failed": "Failed to create file ES"
   }
-} 
+}

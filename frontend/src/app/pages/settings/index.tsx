@@ -23,8 +23,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
   return (
     <Layout
-      title={t('settings.title')}
-      footerText={t('settings.footer')}
+      title={t('pages.settings.title')}
+      footerText={t('pages.settings.footer')}
       settings={false}
       help
       backTo={backTo}

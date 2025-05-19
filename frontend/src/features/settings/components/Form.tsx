@@ -59,21 +59,23 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
 
     const validateAddressField = (value: string): string => {
       if (!fieldsRequired) return '';
-      return validateAddress(value) ? '' : t('settings.errors.addressRequired');
+      return validateAddress(value)
+        ? ''
+        : t('features.settings.form.errors.address_required');
     };
 
     const validateHeaderField = (value: string): string => {
       if (!fieldsRequired) return '';
       return validateShortText(value)
         ? ''
-        : t('settings.errors.headerRequired');
+        : t('features.settings.form.errors.header_required');
     };
 
     const validateSecretField = (value: string): string => {
       if (!fieldsRequired) return '';
       return validateShortText(value)
         ? ''
-        : t('settings.errors.secretRequired');
+        : t('features.settings.form.errors.secret_required');
     };
 
     const addressErr = validateAddressField(address);
@@ -138,7 +140,9 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
     return (
       <div ref={ref} className={`form ${className || ''}`} {...props}>
         <div className="form__content">
-          <p className="form__description">{t('settings.description')}</p>
+          <p className="form__description">
+            {t('features.settings.form.description')}
+          </p>
           <form
             onSubmit={handleSubmit}
             className="form__fields"
@@ -146,7 +150,7 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
           >
             <div className="form__field">
               <FormInput
-                label={t('settings.address')}
+                label={t('features.settings.form.address')}
                 name="address"
                 type="text"
                 value={address}
@@ -163,7 +167,7 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
             </div>
             <div className="form__field">
               <FormInput
-                label={t('settings.secret')}
+                label={t('features.settings.form.secret')}
                 name="secret"
                 type="password"
                 value={secret}
@@ -180,7 +184,7 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
             </div>
             <div className="form__field">
               <FormInput
-                label={t('settings.header')}
+                label={t('features.settings.form.header')}
                 name="header"
                 type="text"
                 value={header}
@@ -212,13 +216,13 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
                     }}
                   />
                   <span className="form__checkbox-text">
-                    {t('settings.demo.title')}
+                    {t('features.settings.form.demo.title')}
                   </span>
                 </label>
                 <p className="form__checkbox-description">
-                  {!demoStarted && t('settings.demo.description')}
+                  {!demoStarted && t('features.settings.form.demo.description')}
                   {demoStarted &&
-                    t('settings.demo.started', {
+                    t('features.settings.form.demo.started', {
                       date: new Date(demoStarted)
                         .toLocaleDateString('en-GB')
                         .split('/')
@@ -231,11 +235,11 @@ export const Form = forwardRef<HTMLDivElement, FormProps>(
             <div className="form__button-container">
               <Button
                 type="submit"
-                name={t('settings.save')}
+                name={t('features.settings.form.save')}
                 variant="primary"
                 disabled={saveDisabled}
                 className="form__save-button"
-                title={t('settings.save')}
+                title={t('features.settings.form.save')}
               />
             </div>
           </form>

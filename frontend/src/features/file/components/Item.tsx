@@ -112,7 +112,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(
                   toggleDropdown(null);
                 }}
               >
-                {t('file.navigate')}
+                {t('features.file.item.navigate')}
               </button>
               <button
                 type="button"
@@ -123,7 +123,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(
                 }}
                 disabled={converting}
               >
-                {t('file.download')}
+                {t('features.file.item.download')}
               </button>
               <button
                 type="button"
@@ -134,7 +134,7 @@ export const FileItem = forwardRef<HTMLDivElement, FileItemProps>(
                 }}
                 disabled={converting}
               >
-                {t('file.delete')}
+                {t('features.file.item.delete')}
               </button>
             </div>
           )}

@@ -16,16 +16,11 @@ const NotConfigured: React.FC<NotConfiguredProps> = () => {
       />
       <div className="notconfigured-container__title">
         <span className="notconfigured-container__title-text">
-          {t('manager.notconfigured_title', {
-            fallback: 'Configuration required',
-          })}
+          {t('features.manager.notconfigured.title')}
         </span>
       </div>
       <div className="notconfigured-container__message">
-        {t('manager.notconfigured_message', {
-          fallback:
-            'Please contact your administrator to configure the document server',
-        })}
+        {t('features.manager.notconfigured.message')}
       </div>
     </div>
   );

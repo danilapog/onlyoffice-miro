@@ -16,25 +16,21 @@ const Installation = () => {
       />
       <div className="installation-container__title">
         <span className="installation-container__title-text">
-          {t('manager.installation_error', {
-            fallback: 'App Installation Required',
-          })}
+          {t('features.manager.installation.error')}
         </span>
       </div>
       <div className="installation-container__message">
-        {t('manager.installation_error_description', {
-          fallback: 'Please install or reinstall the app to continue',
-        })}
+        {t('features.manager.installation.description')}
       </div>
       <Button
-        name={t('manager.installation_error_button', { fallback: 'Install' })}
+        name={t('features.manager.installation.button')}
         variant="primary"
         onClick={() => {
           window.open(import.meta.env.VITE_MIRO_INSTALLATION_URL, '_blank');
           window.miro?.board.ui.closePanel();
         }}
         className="installation-container__button"
-        title={t('manager.installation_error_button', { fallback: 'Install' })}
+        title={t('features.manager.installation.button')}
       />
     </div>
   );
