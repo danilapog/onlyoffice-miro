@@ -184,6 +184,10 @@ func setupFileStoreRoutes(r *Router) {
 				return c.NoContent(http.StatusNotFound)
 			}
 
+			if strings.HasSuffix(reqPath, ".svg") {
+				return c.Blob(http.StatusOK, "image/svg+xml", fileData)
+			}
+
 			contentType := http.DetectContentType(fileData)
 			return c.Blob(http.StatusOK, contentType, fileData)
 		}

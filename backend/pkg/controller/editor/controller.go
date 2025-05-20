@@ -237,8 +237,9 @@ func (c *editorController) handleGet(ctx echo.Context) error {
 		}
 
 		return ctx.Render(http.StatusOK, "editor", map[string]any{
-			"apijs":  address + "/web-apps/apps/api/documents/api.js",
-			"config": string(configJSON),
+			"apijs":   address + "/web-apps/apps/api/documents/api.js",
+			"config":  string(configJSON),
+			"favicon": config.DocumentType,
 		})
 	})
 }
