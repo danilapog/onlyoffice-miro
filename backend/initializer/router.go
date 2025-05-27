@@ -176,6 +176,10 @@ func setupMiroAuthRoutes(r *Router, miroAuthMiddleware *authentication.AuthMiddl
 
 // setupFileStoreRoutes configures file store routes to serve embedded assets
 func setupFileStoreRoutes(r *Router) {
+	r.Echo.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "UP"})
+	})
+
 	r.Echo.GET("/filestore/*", func(c echo.Context) error {
 		reqPath := c.Param("*")
 		if strings.HasPrefix(reqPath, "icons/") {
