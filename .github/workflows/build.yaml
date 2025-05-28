@@ -36,9 +36,6 @@ on:
         - prod
 
 env:
-  VITE_MIRO_ONLYOFFICE_BACKEND: ${{ github.event.inputs.miro-onlyoffice-backend }}
-  VITE_MIRO_INSTALLATION_URL:  ${{ github.event.inputs.miro-installation-url }}
-  VITE_ASC_DEMO_EXPIRATION_DAYS: ${{ github.event.inputs.demo-expiration-days }}
   TAG: ${{ github.event.inputs.tag }}
   #REGISTRY: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io/onlyoffice' }}
   REGISTRY: docker.io/onlyoffice
@@ -60,6 +57,18 @@ jobs:
     #    registry: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io' }}
     #    username: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_USERNAME || secrets.DOCKER_HUB_USERNAME }}
     #    password: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_ACCESS_TOKEN || secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+    - name: hide values
+      run: |
+         echo "::add-mask::${{ github.event.inputs.miro-onlyoffice-backend }}"
+         echo "::add-mask::${{ github.event.inputs.miro-installation-url }}"
+         echo "::add-mask::${{ github.event.inputs.demo-expiration-days }}"
+
+         {
+           echo "VITE_MIRO_ONLYOFFICE_BACKEND=${{ github.event.inputs.miro-onlyoffice-backend }}"
+           echo "VITE_MIRO_INSTALLATION_URL=${{ github.event.inputs.miro-installation-url }}"
+           echo "VITE_ASC_DEMO_EXPIRATION_DAYS=${{ github.event.inputs.demo-expiration-days }}"
+         } >> "$GITHUB_ENV"
 
     - name: Build front
       if: github.event.inputs.frontend == 'true'
