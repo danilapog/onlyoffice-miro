@@ -15,15 +15,15 @@ on:
         description: 'Build backend?'
         default: true
         type: boolean
-      miro-onlyoffice-backend:
+      miro_onlyoffice_backend:
         description: 'Specify backend address'
         type: string
         required: true
-      miro-installation-url:
+      miro_installation_url:
         description: 'Specify installation url'
         type: string
         required: true
-      demo-expiration-days:
+      demo_expiration_days:
         description: 'Specify demo expiration'
         type: string
         required: true
@@ -60,7 +60,7 @@ jobs:
 
     - name: hide values
       run: |
-         cat $GITHUB_EVENT_PATH | jq .
+         #cat $GITHUB_EVENT_PATH | jq .
          
          MIRO_ONLYOFFICE_BACKEND="$(jq -r '.inputs.miro-onlyoffice-backend' $GITHUB_EVENT_PATH)"
          MIRO_INSTALLATION_URL="$(jq -r '.inputs.miro-installation-url' $GITHUB_EVENT_PATH)"
