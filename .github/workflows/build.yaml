@@ -40,7 +40,8 @@ env:
   VITE_MIRO_INSTALLATION_URL:  ${{ github.event.inputs.miro-installation-url }}
   VITE_ASC_DEMO_EXPIRATION_DAYS: ${{ github.event.inputs.demo-expiration-days }}
   TAG: ${{ github.event.inputs.tag }}
-  REGISTRY: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io/onlyoffice' }}
+  #REGISTRY: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io/onlyoffice' }}
+  REGISTRY: docker.io/onlyoffice
 
 jobs:
   publish:
@@ -50,27 +51,29 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-    
-    - name: Login to Container Registry
-      uses: docker/login-action@v3
       with:
-        registry: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io' }}
-        username: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_USERNAME || secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_ACCESS_TOKEN || secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        submodules: 'recursive'
+    
+    #- name: Login to Container Registry
+    #  uses: docker/login-action@v3
+    #  with:
+    #    registry: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_REGISTRY || 'docker.io' }}
+    #    username: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_USERNAME || secrets.DOCKER_HUB_USERNAME }}
+    #    password: ${{ (inputs.repo == 'test') && secrets.DOCKER_TEST_ACCESS_TOKEN || secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
     - name: Build front
       if: github.event.inputs.frontend == 'true'
       run: |
          cd ./frontend
          docker build --no-cache -t ${REGISTRY}/miro-frontend:${TAG} . || echo "FRONT_FAILED=true" >> $GITHUB_ENV
-         docker push ${REGISTRY}/miro-frontend:${TAG} || echo "FRONT_PUSH_FAILED=true" >> $GITHUB_ENV
+         #docker push ${REGISTRY}/miro-frontend:${TAG} || echo "FRONT_PUSH_FAILED=true" >> $GITHUB_ENV
 
     - name: Build backend
       if: github.event.inputs.backend == 'true'
       run: |
          cd ./backend
          docker build --no-cache -t ${REGISTRY}/miro-backend:${TAG} . || echo "BACKEND_FAILED=true" >> $GITHUB_ENV
-         docker push ${REGISTRY}/miro-backend:${TAG} || echo "BACKEND_PUSH_FAILED=true" >> $GITHUB_ENV
+         #docker push ${REGISTRY}/miro-backend:${TAG} || echo "BACKEND_PUSH_FAILED=true" >> $GITHUB_ENV
 
     - name: Final Check for Failures
       if: always()
