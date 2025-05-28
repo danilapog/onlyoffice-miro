@@ -60,9 +60,9 @@ jobs:
 
     - name: hide values
       run: |
-         MIRO_ONLYOFFICE_BACKEND=$(jq -r '.inputs.miro-onlyoffice-backend' $GITHUB_EVENT_PATH)
-         MIRO_INSTALLATION_URL=$(jq -r '.inputs.miro-installation-url' $GITHUB_EVENT_PATH)
-         DEMO_EXPIRATION_DAYS=$(jq -r '.inputs.demo-expiration-days' $GITHUB_EVENT_PATH)
+         MIRO_ONLYOFFICE_BACKEND="$(jq -r '.inputs.miro-onlyoffice-backend' $GITHUB_EVENT_PATH)"
+         MIRO_INSTALLATION_URL="$(jq -r '.inputs.miro-installation-url' $GITHUB_EVENT_PATH)"
+         DEMO_EXPIRATION_DAYS="$(jq -r '.inputs.demo-expiration-days' $GITHUB_EVENT_PATH)"
 
          echo ::add-mask::${MIRO_ONLYOFFICE_BACKEND}
          echo ::add-mask::${MIRO_INSTALLATION_URL}
