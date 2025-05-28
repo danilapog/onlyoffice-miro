@@ -60,15 +60,18 @@ jobs:
 
     - name: hide values
       run: |
-         echo "::add-mask::${{ github.event.inputs.miro-onlyoffice-backend }}"
-         echo "::add-mask::${{ github.event.inputs.miro-installation-url }}"
-         echo "::add-mask::${{ github.event.inputs.demo-expiration-days }}"
+         MIRO_ONLYOFFICE_BACKEND=$(jq -r '.inputs.miro-onlyoffice-backend' $GITHUB_EVENT_PATH)
+         MIRO_INSTALLATION_URL=$(jq -r '.inputs.miro-installation-url' $GITHUB_EVENT_PATH)
+         DEMO_EXPIRATION_DAYS=$(jq -r '.inputs.demo-expiration-days' $GITHUB_EVENT_PATH)
 
-         {
-           echo "VITE_MIRO_ONLYOFFICE_BACKEND=${{ github.event.inputs.miro-onlyoffice-backend }}"
-           echo "VITE_MIRO_INSTALLATION_URL=${{ github.event.inputs.miro-installation-url }}"
-           echo "VITE_ASC_DEMO_EXPIRATION_DAYS=${{ github.event.inputs.demo-expiration-days }}"
-         } >> "$GITHUB_ENV"
+         echo ::add-mask::${MIRO_ONLYOFFICE_BACKEND}
+         echo ::add-mask::${MIRO_INSTALLATION_URL}
+         echo ::add-mask::${DEMO_EXPIRATION_DAYS}
+
+         echo "MIRO_ONLYOFFICE_BACKEND=${MIRO_ONLYOFFICE_BACKEND}" >> "$GITHUB_ENV"
+         echo "MIRO_INSTALLATION_URL=${MIRO_INSTALLATION_URL}" >> "$GITHUB_ENV"
+         echo "DEMO_EXPIRATION_DAYS=${DEMO_EXPIRATION_DAYS}" >> "$GITHUB_ENV"
+         
 
     - name: Build front
       if: github.event.inputs.frontend == 'true'
